@@ -25,7 +25,7 @@
 import { mapActions } from 'vuex';
 import exportSvc from '../../services/exportSvc';
 import modalTemplate from './common/modalTemplate';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc';
 
 export default modalTemplate({
@@ -40,7 +40,7 @@ export default modalTemplate({
     this.$watch('selectedTemplate', (selectedTemplate) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(async () => {
-        const currentFile = store.getters['file/current'];
+        const currentFile = getStore().getters['file/current'];
         const html = await exportSvc.applyTemplate(
           currentFile.id,
           this.allTemplatesById[selectedTemplate],
@@ -57,7 +57,7 @@ export default modalTemplate({
     ]),
     async resolve() {
       const { config } = this;
-      const currentFile = store.getters['file/current'];
+      const currentFile = getStore().getters['file/current'];
       config.resolve();
       await exportSvc.exportToDisk(currentFile.id, 'html', this.allTemplatesById[this.selectedTemplate]);
       badgeSvc.addBadge('exportHtml');

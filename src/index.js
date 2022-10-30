@@ -1,4 +1,4 @@
-import store from './store/index.js';
+import { getStore } from './store/index.js';
 import localDbSvc from './services/localDbSvc.js';
 import './icons/index.js';
 import 'indexeddbshim/dist/indexeddbshim.js';
@@ -19,7 +19,7 @@ OfflinePluginRuntime.install({
     OfflinePluginRuntime.applyUpdate();
   },
   onUpdated: async () => {
-    if (!store.state.light) {
+    if (!getStore().state.light) {
       await localDbSvc.sync();
       localStorage.updated = true;
       // Reload the webpage to load into the new version
@@ -29,7 +29,7 @@ OfflinePluginRuntime.install({
 });
 
 if (localStorage.updated) {
-  store.dispatch('notification/info', 'StackEdit has just updated itself!');
+  getStore().dispatch('notification/info', 'StackEdit has just updated itself!');
   setTimeout(() => localStorage.removeItem('updated'), 2000);
 }
 
@@ -39,7 +39,7 @@ if (!localStorage.installPrompted) {
     promptEvent.preventDefault();
 
     try {
-      await store.dispatch('notification/confirm', 'Add StackEdit to your home screen?');
+      await getStore().dispatch('notification/confirm', 'Add StackEdit to your home screen?');
       promptEvent.prompt();
       await promptEvent.userChoice;
     } catch (err) {

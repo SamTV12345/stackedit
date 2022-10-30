@@ -35,24 +35,24 @@
 import { mapState } from 'vuex';
 import editorSvc from '../services/editorSvc.js';
 import cledit from '../services/editor/cledit/index.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 import EditorClassApplier from './common/EditorClassApplier.js';
 
 const accessor = (fieldName, setterName) => ({
   get() {
-    return store.state.findReplace[fieldName];
+    return getStore().state.findReplace[fieldName];
   },
   set(value) {
-    store.commit(`findReplace/${setterName}`, value);
+    getStore().commit(`findReplace/${setterName}`, value);
   },
 });
 
 const computedLayoutSetting = key => ({
   get() {
-    return store.getters['data/layoutSettings'][key];
+    return getStore().getters['data/layoutSettings'][key];
   },
   set(value) {
-    store.dispatch('data/patchLayoutSettings', {
+    getStore().dispatch('data/patchLayoutSettings', {
       [key]: value,
     });
   },
@@ -223,7 +223,7 @@ export default {
       }
     },
     close() {
-      store.commit('findReplace/setType');
+      getStore().commit('findReplace/setType');
     },
     onEscape() {
       editorSvc.clEditor.focus();
@@ -260,7 +260,7 @@ export default {
     this.onKeyup = (evt) => {
       if (evt.which === 27) {
         // Esc key
-        store.commit('findReplace/setType');
+        getStore().commit('findReplace/setType');
       }
     };
     window.addEventListener('keyup', this.onKeyup);

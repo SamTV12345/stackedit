@@ -66,7 +66,7 @@
 import { mapGetters, mapActions } from 'vuex';
 import ModalInner from './common/ModalInner.vue';
 import workspaceSvc from '../../services/workspaceSvc.js';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 import localDbSvc from '../../services/localDbSvc.js';
 
@@ -101,7 +101,7 @@ export default {
       const workspace = this.workspacesById[this.editedId];
       if (workspace) {
         if (!cancel && this.editingName && this.editingName !== workspace.name) {
-          store.dispatch('workspace/patchWorkspacesById', {
+          getStore().dispatch('workspace/patchWorkspacesById', {
             [this.editedId]: {
               ...workspace,
               name: this.editingName,
@@ -121,7 +121,7 @@ export default {
         this.info('Please close the workspace before removing it.');
       } else {
         try {
-          await store.dispatch('modal/open', 'removeWorkspace');
+          await getStore().dispatch('modal/open', 'removeWorkspace');
           workspaceSvc.removeWorkspace(id);
           badgeSvc.addBadge('removeWorkspace');
         } catch (e) { /* Cancel */ }

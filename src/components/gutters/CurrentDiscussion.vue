@@ -33,7 +33,7 @@ import editorSvc from '../../services/editorSvc.js';
 import animationSvc from '../../services/animationSvc.js';
 import markdownConversionSvc from '../../services/markdownConversionSvc.js';
 import StickyComment from './StickyComment.vue';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default {
@@ -74,7 +74,7 @@ export default {
     ]),
     goToDiscussion(discussionId = this.currentDiscussionId) {
       this.setCurrentDiscussionId(discussionId);
-      const layoutSettings = store.getters['data/layoutSettings'];
+      const layoutSettings = getStore().getters['data/layoutSettings'];
       const discussion = this.currentFileDiscussions[discussionId];
       const coordinates = layoutSettings.showEditor
         ? editorSvc.clEditor.selectionMgr.getCoordinates(discussion.end)
@@ -100,8 +100,8 @@ export default {
     },
     async removeDiscussion() {
       try {
-        await store.dispatch('modal/open', 'discussionDeletion');
-        store.dispatch('discussion/cleanCurrentFile', {
+        await getStore().dispatch('modal/open', 'discussionDeletion');
+        getStore().dispatch('discussion/cleanCurrentFile', {
           filterDiscussion: this.currentDiscussion,
         });
         badgeSvc.addBadge('removeDiscussion');

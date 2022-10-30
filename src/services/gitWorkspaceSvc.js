@@ -1,4 +1,4 @@
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import utils from '../services/utils.js';
 
 const endsWith = (str, suffix) => str.slice(-suffix.length) === suffix;
@@ -6,7 +6,7 @@ const endsWith = (str, suffix) => str.slice(-suffix.length) === suffix;
 export default {
   shaByPath: Object.create(null),
   makeChanges(tree) {
-    const workspacePath = store.getters['workspace/currentWorkspace'].path || '';
+    const workspacePath = getStore().getters['workspace/currentWorkspace'].path || '';
 
     // Store all blobs sha
     this.shaByPath = Object.create(null);
@@ -47,8 +47,8 @@ export default {
     // Collect changes
     const changes = [];
     const idsByPath = {};
-    const syncDataByPath = store.getters['data/syncDataById'];
-    const { itemIdsByGitPath } = store.getters;
+    const syncDataByPath = getStore().getters['data/syncDataById'];
+    const { itemIdsByGitPath } = getStore().getters;
     const getIdFromPath = (path, isFile) => {
       let itemId = idsByPath[path];
       if (!itemId) {
@@ -152,7 +152,7 @@ export default {
     });
 
     // Data creations/updates
-    const syncDataByItemId = store.getters['data/syncDataByItemId'];
+    const syncDataByItemId = getStore().getters['data/syncDataByItemId'];
     Object.keys(treeDataMap).forEach((path) => {
       // Only template data are stored
       const [, id] = path.match(/^\.stackedit-data\/(templates)\.json$/) || [];

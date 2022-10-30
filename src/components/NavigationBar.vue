@@ -55,7 +55,7 @@ import animationSvc from '../services/animationSvc.js';
 import tempFileSvc from '../services/tempFileSvc.js';
 import utils from '../services/utils.js';
 import pagedownButtons from '../data/pagedownButtons.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 import workspaceSvc from '../services/workspaceSvc.js';
 import badgeSvc from '../services/badgeSvc.js';
 
@@ -64,7 +64,7 @@ const mod = /Mac|iPod|iPhone|iPad/.test(navigator.platform) ? 'Meta' : 'Ctrl';
 
 const getShortcut = (method) => {
   let result = '';
-  Object.entries(store.getters['data/computedSettings'].shortcuts).some(([keys, shortcut]) => {
+  Object.entries(getStore().getters['data/computedSettings'].shortcuts).some(([keys, shortcut]) => {
     if (`${shortcut.method || shortcut}` === method) {
       result = keys.split('+').map(key => key.toLowerCase()).map((key) => {
         if (key === 'mod') {
@@ -120,11 +120,11 @@ export default {
       }));
     },
     isSyncPossible() {
-      return store.getters['workspace/syncToken'] ||
-        store.getters['syncLocation/current'].length;
+      return getStore().getters['workspace/syncToken'] ||
+        getStore().getters['syncLocation/current'].length;
     },
     showSpinner() {
-      return !store.state.queue.isEmpty;
+      return !getStore().state.queue.isEmpty;
     },
     titleWidth() {
       if (!this.mounted) {
@@ -153,7 +153,7 @@ export default {
       return result;
     },
     editCancelTrigger() {
-      const current = store.getters['file/current'];
+      const current = getStore().getters['file/current'];
       return utils.serializeObject([
         current.id,
         current.name,
@@ -188,7 +188,7 @@ export default {
       }
     },
     pagedownClick(name) {
-      if (store.getters['content/isCurrentEditable']) {
+      if (getStore().getters['content/isCurrentEditable']) {
         const text = editorSvc.clEditor.getContent();
         editorSvc.pagedownEditor.uiManager.doClick(name);
         if (text !== editorSvc.clEditor.getContent()) {
@@ -202,11 +202,11 @@ export default {
         this.titleInputElt.setSelectionRange(0, this.titleInputElt.value.length);
       } else {
         const title = this.title.trim();
-        this.title = store.getters['file/current'].name;
+        this.title = getStore().getters['file/current'].name;
         if (title && this.title !== title) {
           try {
             await workspaceSvc.storeItem({
-              ...store.getters['file/current'],
+              ...getStore().getters['file/current'],
               name: title,
             });
             badgeSvc.addBadge('editCurrentFileName');

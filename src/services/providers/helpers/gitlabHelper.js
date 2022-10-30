@@ -1,6 +1,6 @@
 import utils from '../../utils.js';
 import networkSvc from '../../networkSvc.js';
-import store from '../../../store/index.js';
+import {getStore} from '../../../store/index.js';
 import userSvc from '../../userSvc.js';
 import badgeSvc from '../../badgeSvc.js';
 
@@ -15,7 +15,7 @@ const request = ({ accessToken, serverUrl }, options) => networkSvc.request({
   .then(res => res.body);
 
 const getCommitMessage = (name, path) => {
-  const message = store.getters['data/computedSettings'].git[name];
+  const message = getStore().getters['data/computedSettings'].git[name];
   return message.replace(/{{path}}/g, path);
 };
 
@@ -87,7 +87,7 @@ export default {
     };
 
     // Add token to gitlab tokens
-    store.dispatch('data/addGitlabToken', token);
+    getStore().dispatch('data/addGitlabToken', token);
     return token;
   },
   async addAccount(serverUrl, applicationId, sub = null) {

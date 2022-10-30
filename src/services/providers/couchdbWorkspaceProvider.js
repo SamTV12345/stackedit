@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import couchdbHelper from './helpers/couchdbHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -10,7 +10,7 @@ export default new Provider({
   id: 'couchdbWorkspace',
   name: 'CouchDB',
   getToken() {
-    return store.getters['workspace/syncToken'];
+    return getStore().getters['workspace/syncToken'];
   },
   getWorkspaceParams({ dbUrl }) {
     return {
@@ -34,19 +34,19 @@ export default new Provider({
     const workspaceId = utils.makeWorkspaceId(workspaceParams);
 
     // Create the token if it doesn't exist
-    if (!store.getters['data/couchdbTokensBySub'][workspaceId]) {
-      store.dispatch('data/addCouchdbToken', {
+    if (!getStore().getters['data/couchdbTokensBySub'][workspaceId]) {
+      getStore().dispatch('data/addCouchdbToken', {
         sub: workspaceId,
         dbUrl,
       });
     }
 
     // Create the workspace if it doesn't exist
-    if (!store.getters['workspace/workspacesById'][workspaceId]) {
+    if (!getStore().getters['workspace/workspacesById'][workspaceId]) {
       try {
         // Make sure the database exists and retrieve its name
-        const db = await couchdbHelper.getDb(store.getters['data/couchdbTokensBySub'][workspaceId]);
-        store.dispatch('workspace/patchWorkspacesById', {
+        const db = await couchdbHelper.getDb(getStore().getters['data/couchdbTokensBySub'][workspaceId]);
+        getStore().dispatch('workspace/patchWorkspacesById', {
           [workspaceId]: {
             id: workspaceId,
             name: db.db_name,
@@ -60,11 +60,11 @@ export default new Provider({
     }
 
     badgeSvc.addBadge('addCouchdbWorkspace');
-    return store.getters['workspace/workspacesById'][workspaceId];
+    return getStore().getters['workspace/workspacesById'][workspaceId];
   },
   async getChanges() {
-    const syncToken = store.getters['workspace/syncToken'];
-    const lastSeq = store.getters['data/localSettings'].syncLastSeq;
+    const syncToken = getStore().getters['workspace/syncToken'];
+    const lastSeq = getStore().getters['data/localSettings'].syncLastSeq;
     const result = await couchdbHelper.getChanges(syncToken, lastSeq);
     const changes = result.changes.filter((change) => {
       if (!change.deleted && change.doc) {
@@ -88,12 +88,12 @@ export default new Provider({
     return changes;
   },
   onChangesApplied() {
-    store.dispatch('data/patchLocalSettings', {
+    getStore().dispatch('data/patchLocalSettings', {
       syncLastSeq,
     });
   },
   async saveWorkspaceItem({ item, syncData }) {
-    const syncToken = store.getters['workspace/syncToken'];
+    const syncToken = getStore().getters['workspace/syncToken'];
     const { id, rev } = await couchdbHelper.uploadDocument({
       token: syncToken,
       item,
@@ -113,7 +113,7 @@ export default new Provider({
     };
   },
   removeWorkspaceItem({ syncData }) {
-    const syncToken = store.getters['workspace/syncToken'];
+    const syncToken = getStore().getters['workspace/syncToken'];
     return couchdbHelper.removeDocument(syncToken, syncData.id, syncData.rev);
   },
   async downloadWorkspaceContent({ token, contentSyncData }) {

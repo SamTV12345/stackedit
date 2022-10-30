@@ -20,7 +20,7 @@ import SplashScreen from './SplashScreen.vue';
 import syncSvc from '../services/syncSvc.js';
 import networkSvc from '../services/networkSvc.js';
 import tempFileSvc from '../services/tempFileSvc.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 import './common/vueGlobals.js';
 
 const themeClasses = {
@@ -41,7 +41,7 @@ export default {
   }),
   computed: {
     classes() {
-      const result = themeClasses[store.getters['data/computedSettings'].colorTheme];
+      const result = themeClasses[getStore().getters['data/computedSettings'].colorTheme];
       return Array.isArray(result) ? result : themeClasses.light;
     },
   },
@@ -61,7 +61,7 @@ export default {
         window.location.reload();
       } else if (err && err.message !== 'RELOAD') {
         console.error(err); // eslint-disable-line no-console
-        store.dispatch('notification/error', err);
+        getStore().dispatch('notification/error', err);
       }
     }
   },

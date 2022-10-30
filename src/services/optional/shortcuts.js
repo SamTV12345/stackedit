@@ -1,10 +1,10 @@
 import Mousetrap from 'mousetrap';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import editorSvc from '../../services/editorSvc.js';
 import syncSvc from '../../services/syncSvc.js';
 
 // Skip shortcuts if modal is open or editor is hidden
-Mousetrap.prototype.stopCallback = () => store.getters['modal/config'] || !store.getters['content/isCurrentEditable'];
+Mousetrap.prototype.stopCallback = () => getStore().getters['modal/config'] || !getStore().getters['content/isCurrentEditable'];
 
 const pagedownHandler = name => () => {
   editorSvc.pagedownEditor.uiManager.doClick(name);
@@ -12,7 +12,7 @@ const pagedownHandler = name => () => {
 };
 
 const findReplaceOpener = type => () => {
-  store.dispatch('findReplace/open', {
+  getStore().dispatch('findReplace/open', {
     type,
     findText: editorSvc.clEditor.selectionMgr.hasFocus() &&
       editorSvc.clEditor.selectionMgr.getSelectedText(),
@@ -63,8 +63,8 @@ const methods = {
   },
 };
 
-store.watch(
-  () => store.getters['data/computedSettings'],
+getStore().watch(
+  () => getStore().getters['data/computedSettings'],
   (computedSettings) => {
     Mousetrap.reset();
 

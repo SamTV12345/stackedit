@@ -1,4 +1,4 @@
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import utils from './utils.js';
 import constants from '../data/constants.js';
 import badgeSvc from './badgeSvc.js';
@@ -26,19 +26,19 @@ export default {
     };
     const content = {
       id: `${id}/content`,
-      text: utils.sanitizeText(text || store.getters['data/computedSettings'].newFileContent),
+      text: utils.sanitizeText(text || getStore().getters['data/computedSettings'].newFileContent),
       properties: utils
-        .sanitizeText(properties || store.getters['data/computedSettings'].newFileProperties),
+        .sanitizeText(properties || getStore().getters['data/computedSettings'].newFileProperties),
       discussions: discussions || {},
       comments: comments || {},
     };
-    const workspaceUniquePaths = store.getters['workspace/currentWorkspaceHasUniquePaths'];
+    const workspaceUniquePaths = getStore().getters['workspace/currentWorkspaceHasUniquePaths'];
 
     // Show warning dialogs
     if (!background) {
       // If name is being stripped
       if (item.name !== constants.defaultName && item.name !== name) {
-        await store.dispatch('modal/open', {
+        await getStore().dispatch('modal/open', {
           type: 'stripName',
           item,
         });
@@ -46,10 +46,10 @@ export default {
 
       // Check if there is already a file with that path
       if (workspaceUniquePaths) {
-        const parentPath = store.getters.pathsByItemId[item.parentId] || '';
+        const parentPath = getStore().getters.pathsByItemId[item.parentId] || '';
         const path = parentPath + item.name;
-        if (store.getters.itemsByPath[path]) {
-          await store.dispatch('modal/open', {
+        if (getStore().getters.itemsByPath[path]) {
+          await getStore().dispatch('modal/open', {
             type: 'pathConflict',
             item,
           });
@@ -58,14 +58,14 @@ export default {
     }
 
     // Save file and content in the store
-    store.commit('content/setItem', content);
-    store.commit('file/setItem', item);
+    getStore().commit('content/setItem', content);
+    getStore().commit('file/setItem', item);
     if (workspaceUniquePaths) {
       this.makePathUnique(id);
     }
 
     // Return the new file item
-    return store.state.file.itemsById[id];
+    return getStore().state.file.itemsById[id];
   },
 
   /**
@@ -76,7 +76,7 @@ export default {
     const sanitizedName = utils.sanitizeFilename(item.name);
 
     if (item.type === 'folder' && forbiddenFolderNameMatcher.exec(sanitizedName)) {
-      await store.dispatch('modal/open', {
+      await getStore().dispatch('modal/open', {
         type: 'unauthorizedName',
         item,
       });
@@ -86,19 +86,19 @@ export default {
     // Show warning dialogs
     // If name has been stripped
     if (sanitizedName !== constants.defaultName && sanitizedName !== item.name) {
-      await store.dispatch('modal/open', {
+      await getStore().dispatch('modal/open', {
         type: 'stripName',
         item,
       });
     }
 
     // Check if there is a path conflict
-    if (store.getters['workspace/currentWorkspaceHasUniquePaths']) {
-      const parentPath = store.getters.pathsByItemId[item.parentId] || '';
+    if (getStore().getters['workspace/currentWorkspaceHasUniquePaths']) {
+      const parentPath = getStore().getters.pathsByItemId[item.parentId] || '';
       const path = parentPath + sanitizedName;
-      const items = store.getters.itemsByPath[path] || [];
+      const items = getStore().getters.itemsByPath[path] || [];
       if (items.some(itemWithSamePath => itemWithSamePath.id !== id)) {
-        await store.dispatch('modal/open', {
+        await getStore().dispatch('modal/open', {
           type: 'pathConflict',
           item,
         });
@@ -116,7 +116,7 @@ export default {
    */
   setOrPatchItem(patch) {
     const item = {
-      ...store.getters.allItemsById[patch.id] || patch,
+      ...getStore().getters.allItemsById[patch.id] || patch,
     };
     if (!item.id) {
       return null;
@@ -133,17 +133,17 @@ export default {
     }
 
     // Save item in the store
-    store.commit(`${item.type}/setItem`, item);
+    getStore().commit(`${item.type}/setItem`, item);
 
     // Remove circular reference
     this.removeCircularReference(item);
 
     // Ensure path uniqueness
-    if (store.getters['workspace/currentWorkspaceHasUniquePaths']) {
+    if (getStore().getters['workspace/currentWorkspaceHasUniquePaths']) {
       this.makePathUnique(item.id);
     }
 
-    return store.getters.allItemsById[item.id];
+    return getStore().getters.allItemsById[item.id];
   },
 
   /**
@@ -151,19 +151,19 @@ export default {
    */
   deleteFile(fileId) {
     // Delete the file
-    store.commit('file/deleteItem', fileId);
+    getStore().commit('file/deleteItem', fileId);
     // Delete the content
-    store.commit('content/deleteItem', `${fileId}/content`);
+    getStore().commit('content/deleteItem', `${fileId}/content`);
     // Delete the syncedContent
-    store.commit('syncedContent/deleteItem', `${fileId}/syncedContent`);
+    getStore().commit('syncedContent/deleteItem', `${fileId}/syncedContent`);
     // Delete the contentState
-    store.commit('contentState/deleteItem', `${fileId}/contentState`);
+    getStore().commit('contentState/deleteItem', `${fileId}/contentState`);
     // Delete sync locations
-    (store.getters['syncLocation/groupedByFileId'][fileId] || [])
-      .forEach(item => store.commit('syncLocation/deleteItem', item.id));
+    (getStore().getters['syncLocation/groupedByFileId'][fileId] || [])
+      .forEach(item => getStore().commit('syncLocation/deleteItem', item.id));
     // Delete publish locations
-    (store.getters['publishLocation/groupedByFileId'][fileId] || [])
-      .forEach(item => store.commit('publishLocation/deleteItem', item.id));
+    (getStore().getters['publishLocation/groupedByFileId'][fileId] || [])
+      .forEach(item => getStore().commit('publishLocation/deleteItem', item.id));
   },
 
   /**
@@ -171,7 +171,7 @@ export default {
    */
   sanitizeWorkspace(idsToKeep) {
     // Detect and remove circular references for all folders.
-    store.getters['folder/items'].forEach(folder => this.removeCircularReference(folder));
+    getStore().getters['folder/items'].forEach(folder => this.removeCircularReference(folder));
 
     this.ensureUniquePaths(idsToKeep);
     this.ensureUniqueLocations(idsToKeep);
@@ -181,14 +181,14 @@ export default {
    * Detect and remove circular reference for an item.
    */
   removeCircularReference(item) {
-    const foldersById = store.state.folder.itemsById;
+    const foldersById = getStore().state.folder.itemsById;
     for (
       let parentFolder = foldersById[item.parentId];
       parentFolder;
       parentFolder = foldersById[parentFolder.parentId]
     ) {
       if (parentFolder.id === item.id) {
-        store.commit('folder/patchItem', {
+        getStore().commit('folder/patchItem', {
           id: item.id,
           parentId: null,
         });
@@ -201,8 +201,8 @@ export default {
    * Ensure two files/folders don't have the same path if the workspace doesn't allow it.
    */
   ensureUniquePaths(idsToKeep = {}) {
-    if (store.getters['workspace/currentWorkspaceHasUniquePaths']) {
-      if (Object.keys(store.getters.pathsByItemId)
+    if (getStore().getters['workspace/currentWorkspaceHasUniquePaths']) {
+      if (Object.keys(getStore().getters.pathsByItemId)
         .some(id => !idsToKeep[id] && this.makePathUnique(id))
       ) {
         // Just changed one item path, restart
@@ -216,7 +216,7 @@ export default {
    * Add a prefix to its name and return true otherwise.
    */
   makePathUnique(id) {
-    const { itemsByPath, allItemsById, pathsByItemId } = store.getters;
+    const { itemsByPath, allItemsById, pathsByItemId } = getStore().getters;
     const item = allItemsById[id];
     if (!item) {
       return false;
@@ -236,7 +236,7 @@ export default {
         pathWithSuffix += '/';
       }
       if (!itemsByPath[pathWithSuffix]) {
-        store.commit(`${item.type}/patchItem`, {
+        getStore().commit(`${item.type}/patchItem`, {
           id: item.id,
           name: `${item.name}.${suffix}`,
         });
@@ -246,7 +246,7 @@ export default {
   },
 
   addSyncLocation(location) {
-    store.commit('syncLocation/setItem', {
+    getStore().commit('syncLocation/setItem', {
       ...location,
       id: utils.uid(),
     });
@@ -254,13 +254,13 @@ export default {
     // Sanitize the workspace
     this.ensureUniqueLocations();
 
-    if (Object.keys(store.getters['syncLocation/currentWithWorkspaceSyncLocation']).length > 1) {
+    if (Object.keys(getStore().getters['syncLocation/currentWithWorkspaceSyncLocation']).length > 1) {
       badgeSvc.addBadge('syncMultipleLocations');
     }
   },
 
   addPublishLocation(location) {
-    store.commit('publishLocation/setItem', {
+    getStore().commit('publishLocation/setItem', {
       ...location,
       id: utils.uid(),
     });
@@ -268,7 +268,7 @@ export default {
     // Sanitize the workspace
     this.ensureUniqueLocations();
 
-    if (Object.keys(store.getters['publishLocation/current']).length > 1) {
+    if (Object.keys(getStore().getters['publishLocation/current']).length > 1) {
       badgeSvc.addBadge('publishMultipleLocations');
     }
   },
@@ -278,11 +278,11 @@ export default {
    */
   ensureUniqueLocations(idsToKeep = {}) {
     ['syncLocation', 'publishLocation'].forEach((type) => {
-      store.getters[`${type}/items`].forEach((item) => {
+      getStore().getters[`${type}/items`].forEach((item) => {
         if (!idsToKeep[item.id]
-          && store.getters[`${type}/groupedByFileIdAndHash`][item.fileId][item.hash].length > 1
+          && getStore().getters[`${type}/groupedByFileIdAndHash`][item.fileId][item.hash].length > 1
         ) {
-          store.commit(`${item.type}/deleteItem`, item.id);
+          getStore().commit(`${item.type}/deleteItem`, item.id);
         }
       });
     });
@@ -295,7 +295,7 @@ export default {
     // Remove from the store first as workspace tabs will reload.
     // Workspace deletion will be persisted as soon as possible
     // by the store.getters['data/workspaces'] watcher in localDbSvc.
-    store.dispatch('workspace/removeWorkspace', id);
+    getStore().dispatch('workspace/removeWorkspace', id);
 
     // Drop the database
     await new Promise((resolve) => {

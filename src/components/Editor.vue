@@ -12,7 +12,7 @@
 import { mapGetters } from 'vuex';
 import CommentList from './gutters/CommentList.vue';
 import EditorNewDiscussionButton from './gutters/EditorNewDiscussionButton.vue';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 export default {
   components: {
@@ -53,11 +53,11 @@ export default {
     editorElt.addEventListener('mouseover', onDiscussionEvt(classToggler(true)));
     editorElt.addEventListener('mouseout', onDiscussionEvt(classToggler(false)));
     editorElt.addEventListener('click', onDiscussionEvt((discussionId) => {
-      store.commit('discussion/setCurrentDiscussionId', discussionId);
+      getStore().commit('discussion/setCurrentDiscussionId', discussionId);
     }));
 
     this.$watch(
-      () => store.state.discussion.currentDiscussionId,
+      () => getStore().state.discussion.currentDiscussionId,
       (discussionId, oldDiscussionId) => {
         if (oldDiscussionId) {
           editorElt.querySelectorAll(`.discussion-editor-highlighting--${oldDiscussionId}`)

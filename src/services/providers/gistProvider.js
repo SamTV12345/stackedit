@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import githubHelper from './helpers/githubHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -8,7 +8,7 @@ export default new Provider({
   id: 'gist',
   name: 'Gist',
   getToken({ sub }) {
-    return store.getters['data/githubTokensBySub'][sub];
+    return getStore().getters['data/githubTokensBySub'][sub];
   },
   getLocationUrl({ gistId }) {
     return `https://gist.github.com/${gistId}`;
@@ -24,7 +24,7 @@ export default new Provider({
     return Provider.parseContent(content, `${syncLocation.fileId}/content`);
   },
   async uploadContent(token, content, syncLocation) {
-    const file = store.state.file.itemsById[syncLocation.fileId];
+    const file = getStore().state.file.itemsById[syncLocation.fileId];
     const description = utils.sanitizeName(file && file.name);
     const gist = await githubHelper.uploadGist({
       ...syncLocation,

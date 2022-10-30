@@ -31,7 +31,7 @@ import networkSvc from '../../services/networkSvc.js';
 import editorSvc from '../../services/editorSvc.js';
 import googleHelper from '../../services/providers/helpers/googleHelper.js';
 import modalTemplate from './common/modalTemplate.js';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default modalTemplate({
@@ -41,11 +41,11 @@ export default modalTemplate({
   methods: {
     async resolve() {
       this.config.resolve();
-      const currentFile = store.getters['file/current'];
-      const currentContent = store.getters['content/current'];
+      const currentFile = getStore().getters['file/current'];
+      const currentContent = getStore().getters['content/current'];
       const { selectedFormat } = this;
-      store.dispatch('queue/enqueue', async () => {
-        const tokenToRefresh = store.getters['workspace/sponsorToken'];
+      getStore().dispatch('queue/enqueue', async () => {
+        const tokenToRefresh = getStore().getters['workspace/sponsorToken'];
         const sponsorToken = tokenToRefresh && await googleHelper.refreshToken(tokenToRefresh);
 
         try {
@@ -55,7 +55,7 @@ export default modalTemplate({
             params: {
               idToken: sponsorToken && sponsorToken.idToken,
               format: selectedFormat,
-              options: JSON.stringify(store.getters['data/computedSettings'].pandoc),
+              options: JSON.stringify(getStore().getters['data/computedSettings'].pandoc),
               metadata: JSON.stringify(currentContent.properties),
             },
             body: JSON.stringify(editorSvc.getPandocAst()),
@@ -66,10 +66,10 @@ export default modalTemplate({
           badgeSvc.addBadge('exportPandoc');
         } catch (err) {
           if (err.status === 401) {
-            store.dispatch('modal/open', 'sponsorOnly');
+            getStore().dispatch('modal/open', 'sponsorOnly');
           } else {
             console.error(err); // eslint-disable-line no-console
-            store.dispatch('notification/error', err);
+            getStore().dispatch('notification/error', err);
           }
         }
       });

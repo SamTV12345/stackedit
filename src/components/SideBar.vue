@@ -43,7 +43,7 @@ import ImportExportMenu from './menus/ImportExportMenu.vue';
 import WorkspaceBackupMenu from './menus/WorkspaceBackupMenu.vue';
 import markdownSample from '../data/markdownSample.md';
 import markdownConversionSvc from '../services/markdownConversionSvc.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 const panelNames = {
   menu: 'Menu',
@@ -73,10 +73,10 @@ export default {
   }),
   computed: {
     panel() {
-      if (store.state.light) {
+      if (getStore().state.light) {
         return null; // No menu in light mode
       }
-      const result = store.getters['data/layoutSettings'].sideBarPanel;
+      const result = getStore().getters['data/layoutSettings'].sideBarPanel;
       return panelNames[result] ? result : 'menu';
     },
     panelName() {

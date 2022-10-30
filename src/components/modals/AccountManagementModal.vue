@@ -80,7 +80,7 @@
 import { mapGetters } from 'vuex';
 import ModalInner from './common/ModalInner.vue';
 import MenuEntry from '../menus/common/MenuEntry.vue';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import utils from '../../services/utils.js';
 import googleHelper from '../../services/providers/helpers/googleHelper.js';
 import dropboxHelper from '../../services/providers/helpers/dropboxHelper.js';
@@ -101,7 +101,7 @@ export default {
     ]),
     entries() {
       return [
-        ...Object.values(store.getters['data/googleTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/googleTokensBySub']).map(token => ({
           token,
           providerId: 'google',
           userId: token.sub,
@@ -109,26 +109,26 @@ export default {
           scopes: ['openid', 'profile', ...token.scopes
             .map(scope => scope.replace(/^https:\/\/www.googleapis.com\/auth\//, ''))],
         })),
-        ...Object.values(store.getters['data/couchdbTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/couchdbTokensBySub']).map(token => ({
           token,
           providerId: 'couchdb',
           url: token.dbUrl,
           name: token.name,
         })),
-        ...Object.values(store.getters['data/dropboxTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/dropboxTokensBySub']).map(token => ({
           token,
           providerId: 'dropbox',
           userId: token.sub,
           name: token.name,
         })),
-        ...Object.values(store.getters['data/githubTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/githubTokensBySub']).map(token => ({
           token,
           providerId: 'github',
           userId: token.sub,
           name: token.name,
           scopes: token.scopes,
         })),
-        ...Object.values(store.getters['data/gitlabTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/gitlabTokensBySub']).map(token => ({
           token,
           providerId: 'gitlab',
           url: token.serverUrl,
@@ -136,14 +136,14 @@ export default {
           name: token.name,
           scopes: ['api'],
         })),
-        ...Object.values(store.getters['data/wordpressTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/wordpressTokensBySub']).map(token => ({
           token,
           providerId: 'wordpress',
           userId: token.sub,
           name: token.name,
           scopes: ['global'],
         })),
-        ...Object.values(store.getters['data/zendeskTokensBySub']).map(token => ({
+        ...Object.values(getStore().getters['data/zendeskTokensBySub']).map(token => ({
           token,
           providerId: 'zendesk',
           url: `https://${token.subdomain}.zendesk.com/`,
@@ -156,9 +156,9 @@ export default {
   },
   methods: {
     async remove(entry) {
-      const tokensBySub = utils.deepCopy(store.getters[`data/${entry.providerId}TokensBySub`]);
+      const tokensBySub = utils.deepCopy(getStore().getters[`data/${entry.providerId}TokensBySub`]);
       delete tokensBySub[entry.token.sub];
-      await store.dispatch('data/patchTokensByType', {
+      await getStore().dispatch('data/patchTokensByType', {
         [entry.providerId]: tokensBySub,
       });
       badgeSvc.addBadge('removeAccount');
@@ -170,26 +170,26 @@ export default {
     },
     async addDropboxAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'dropboxAccount' });
-        await dropboxHelper.addAccount(!store.getters['data/localSettings'].dropboxRestrictedAccess);
+        await getStore().dispatch('modal/open', { type: 'dropboxAccount' });
+        await dropboxHelper.addAccount(!getStore().getters['data/localSettings'].dropboxRestrictedAccess);
       } catch (e) { /* cancel */ }
     },
     async addGithubAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'githubAccount' });
-        await githubHelper.addAccount(store.getters['data/localSettings'].githubRepoFullAccess);
+        await getStore().dispatch('modal/open', { type: 'githubAccount' });
+        await githubHelper.addAccount(getStore().getters['data/localSettings'].githubRepoFullAccess);
       } catch (e) { /* cancel */ }
     },
     async addGitlabAccount() {
       try {
-        const { serverUrl, applicationId } = await store.dispatch('modal/open', { type: 'gitlabAccount' });
+        const { serverUrl, applicationId } = await getStore().dispatch('modal/open', { type: 'gitlabAccount' });
         await gitlabHelper.addAccount(serverUrl, applicationId);
       } catch (e) { /* cancel */ }
     },
     async addGoogleDriveAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'googleDriveAccount' });
-        await googleHelper.addDriveAccount(!store.getters['data/localSettings'].googleDriveRestrictedAccess);
+        await getStore().dispatch('modal/open', { type: 'googleDriveAccount' });
+        await googleHelper.addDriveAccount(!getStore().getters['data/localSettings'].googleDriveRestrictedAccess);
       } catch (e) { /* cancel */ }
     },
     async addGooglePhotosAccount() {
@@ -204,7 +204,7 @@ export default {
     },
     async addZendeskAccount() {
       try {
-        const { subdomain, clientId } = await store.dispatch('modal/open', { type: 'zendeskAccount' });
+        const { subdomain, clientId } = await getStore().dispatch('modal/open', { type: 'zendeskAccount' });
         await zendeskHelper.addAccount(subdomain, clientId);
       } catch (e) { /* cancel */ }
     },

@@ -58,7 +58,7 @@ import ModalInner from './common/ModalInner.vue';
 import CodeEditor from '../CodeEditor.vue';
 import emptyTemplateValue from '../../data/empties/emptyTemplateValue.html';
 import emptyTemplateHelpers from '!raw-loader!../../data/empties/emptyTemplateHelpers.js'; // eslint-disable-line
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 
 const collator = new Intl.Collator(undefined, { sensitivity: 'base' });
 
@@ -93,7 +93,7 @@ export default {
   },
   created() {
     this.$watch(
-      () => store.getters['data/allTemplatesById'],
+      () => getStore().getters['data/allTemplatesById'],
       (allTemplatesById) => {
         const templates = {};
         // Sort templates by name
@@ -155,9 +155,9 @@ export default {
       }, 1);
     },
     async resolve() {
-      const oldTemplateIds = Object.keys(store.getters['data/templatesById']);
-      await store.dispatch('data/setTemplatesById', this.templates);
-      const newTemplateIds = Object.keys(store.getters['data/templatesById']);
+      const oldTemplateIds = Object.keys(getStore().getters['data/templatesById']);
+      await getStore().dispatch('data/setTemplatesById', this.templates);
+      const newTemplateIds = Object.keys(getStore().getters['data/templatesById']);
       const createdCount = newTemplateIds
         .filter(id => !oldTemplateIds.includes(id))
         .length;

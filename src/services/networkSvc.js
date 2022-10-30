@@ -1,5 +1,5 @@
 import utils from './utils.js';
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import constants from '../data/constants.js';
 
 const scriptLoadingPromises = Object.create(null);
@@ -47,7 +47,7 @@ export default {
     lastFocus = 0;
     const setLastFocus = () => {
       lastFocus = Date.now();
-      localStorage.setItem(store.getters['workspace/lastFocusKey'], lastFocus);
+      localStorage.setItem(getStore().getters['workspace/lastFocusKey'], lastFocus);
       setLastActivity();
     };
     if (document.hasFocus()) {
@@ -59,10 +59,10 @@ export default {
     const checkOffline = async () => {
       const isBrowserOffline = window.navigator.onLine === false;
       if (!isBrowserOffline
-        && store.state.lastOfflineCheck + networkTimeout + 5000 < Date.now()
+        && getStore().state.lastOfflineCheck + networkTimeout + 5000 < Date.now()
         && this.isUserActive()
       ) {
-        store.commit('updateLastOfflineCheck');
+        getStore().commit('updateLastOfflineCheck');
         const script = document.createElement('script');
         let timeout;
         try {
@@ -86,12 +86,12 @@ export default {
         }
       }
       const offline = isBrowserOffline || isConnectionDown;
-      if (store.state.offline !== offline) {
-        store.commit('setOffline', offline);
+      if (getStore().state.offline !== offline) {
+        getStore().commit('setOffline', offline);
         if (offline) {
-          store.dispatch('notification/error', 'You are offline.');
+          getStore().dispatch('notification/error', 'You are offline.');
         } else {
-          store.dispatch('notification/info', 'You are back online!');
+          getStore().dispatch('notification/info', 'You are back online!');
           this.getServerConf();
         }
       }
@@ -107,11 +107,11 @@ export default {
     this.getServerConf();
   },
   async getServerConf() {
-    if (!store.state.offline && !isConfLoading && !isConfLoaded) {
+    if (!getStore().state.offline && !isConfLoading && !isConfLoaded) {
       try {
         isConfLoading = true;
         const res = await this.request({ url: 'conf' });
-        await store.dispatch('data/setServerConf', res.body);
+        await getStore().dispatch('data/setServerConf', res.body);
         isConfLoaded = true;
       } finally {
         isConfLoading = false;
@@ -120,14 +120,14 @@ export default {
   },
   isWindowFocused() {
     // We don't use state.workspace.lastFocus as it's not reactive
-    const storedLastFocus = localStorage.getItem(store.getters['workspace/lastFocusKey']);
+    const storedLastFocus = localStorage.getItem(getStore().getters['workspace/lastFocusKey']);
     return parseInt(storedLastFocus, 10) === lastFocus;
   },
   isUserActive() {
     return lastActivity > Date.now() - userInactiveAfter && this.isWindowFocused();
   },
   isConfLoaded() {
-    return !!Object.keys(store.getters['data/serverConf']).length;
+    return !!Object.keys(getStore().getters['data/serverConf']).length;
   },
   async loadScript(url) {
     if (!scriptLoadingPromises[url]) {
@@ -183,8 +183,8 @@ export default {
                 reject(new Error('REATTEMPT'));
               } else {
                 isConnectionDown = true;
-                store.commit('setOffline', true);
-                store.commit('updateLastOfflineCheck');
+                getStore().commit('setOffline', true);
+                getStore().commit('updateLastOfflineCheck');
                 reject(new Error('You are offline.'));
               }
             }, silentAuthorizeTimeout);
@@ -253,7 +253,7 @@ export default {
       try {
         return await new Promise((resolve, reject) => {
           if (offlineCheck) {
-            store.commit('updateLastOfflineCheck');
+            getStore().commit('updateLastOfflineCheck');
           }
 
           const xhr = new window.XMLHttpRequest();
@@ -263,7 +263,7 @@ export default {
             xhr.abort();
             if (offlineCheck) {
               isConnectionDown = true;
-              store.commit('setOffline', true);
+              getStore().commit('setOffline', true);
               reject(new Error('You are offline.'));
             } else {
               reject(new Error('Network request timeout.'));
@@ -298,7 +298,7 @@ export default {
             clearTimeout(timeoutId);
             if (offlineCheck) {
               isConnectionDown = true;
-              store.commit('setOffline', true);
+              getStore().commit('setOffline', true);
               reject(new Error('You are offline.'));
             } else {
               reject(new Error('Network request failed.'));

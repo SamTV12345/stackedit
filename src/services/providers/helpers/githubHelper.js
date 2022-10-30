@@ -1,6 +1,6 @@
 import utils from '../../utils.js';
 import networkSvc from '../../networkSvc.js';
-import store from '../../../store/index.js';
+import {getStore} from '../../../store/index.js';
 import userSvc from '../../userSvc.js';
 import badgeSvc from '../../badgeSvc.js';
 
@@ -25,7 +25,7 @@ const repoRequest = (token, owner, repo, options) => request(token, {
   .then(res => res.body);
 
 const getCommitMessage = (name, path) => {
-  const message = store.getters['data/computedSettings'].git[name];
+  const message = getStore().getters['data/computedSettings'].git[name];
   return message.replace(/{{path}}/g, path);
 };
 
@@ -63,7 +63,7 @@ export default {
    * https://developer.github.com/apps/building-oauth-apps/authorization-options-for-oauth-apps/
    */
   async startOauth2(scopes, sub = null, silent = false) {
-    const clientId = store.getters['data/serverConf'].githubClientId;
+    const clientId = getStore().getters['data/serverConf'].githubClientId;
 
     // Get an OAuth2 code
     const { code } = await networkSvc.startOauth2(
@@ -114,7 +114,7 @@ export default {
     };
 
     // Add token to github tokens
-    store.dispatch('data/addGithubToken', token);
+    getStore().dispatch('data/addGithubToken', token);
     return token;
   },
   async addAccount(repoFullAccess = false) {

@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import googleHelper from './helpers/googleHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -9,7 +9,7 @@ export default new Provider({
   id: 'googleDriveAppData',
   name: 'Google Drive app data',
   getToken() {
-    return store.getters['workspace/syncToken'];
+    return getStore().getters['workspace/syncToken'];
   },
   getWorkspaceParams() {
     // No param as it's the main workspace
@@ -29,11 +29,11 @@ export default new Provider({
   async initWorkspace() {
     // Nothing much to do since the main workspace isn't necessarily synchronized
     // Return the main workspace
-    return store.getters['workspace/workspacesById'].main;
+    return getStore().getters['workspace/workspacesById'].main;
   },
   async getChanges() {
-    const syncToken = store.getters['workspace/syncToken'];
-    const startPageToken = store.getters['data/localSettings'].syncStartPageToken;
+    const syncToken = getStore().getters['workspace/syncToken'];
+    const startPageToken = getStore().getters['data/localSettings'].syncStartPageToken;
     const result = await googleHelper.getChanges(syncToken, startPageToken, true);
     const changes = result.changes.filter((change) => {
       if (change.file) {
@@ -58,12 +58,12 @@ export default new Provider({
     return changes;
   },
   onChangesApplied() {
-    store.dispatch('data/patchLocalSettings', {
+    getStore().dispatch('data/patchLocalSettings', {
       syncStartPageToken,
     });
   },
   async saveWorkspaceItem({ item, syncData, ifNotTooLate }) {
-    const syncToken = store.getters['workspace/syncToken'];
+    const syncToken = getStore().getters['workspace/syncToken'];
     const file = await googleHelper.uploadAppDataFile({
       token: syncToken,
       name: JSON.stringify(item),
@@ -82,7 +82,7 @@ export default new Provider({
     };
   },
   removeWorkspaceItem({ syncData, ifNotTooLate }) {
-    const syncToken = store.getters['workspace/syncToken'];
+    const syncToken = getStore().getters['workspace/syncToken'];
     return googleHelper.removeAppDataFile(syncToken, syncData.id, ifNotTooLate);
   },
   async downloadWorkspaceContent({ token, contentSyncData }) {

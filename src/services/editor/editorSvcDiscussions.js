@@ -2,7 +2,7 @@ import DiffMatchPatch from 'diff-match-patch';
 import cledit from './cledit/index.js';
 import utils from '../utils.js';
 import diffUtils from '../diffUtils.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import EditorClassApplier from '../../components/common/EditorClassApplier.js';
 import PreviewClassApplier from '../../components/common/PreviewClassApplier.js';
 
@@ -39,9 +39,9 @@ function syncDiscussionMarkers(content, writeOffsets) {
   const discussions = {
     ...content.discussions,
   };
-  const newDiscussion = store.getters['discussion/newDiscussion'];
+  const newDiscussion = getStore().getters['discussion/newDiscussion'];
   if (newDiscussion) {
-    discussions[store.state.discussion.newDiscussionId] = {
+    discussions[getStore().state.discussion.newDiscussionId] = {
       ...newDiscussion,
     };
   }
@@ -65,9 +65,9 @@ function syncDiscussionMarkers(content, writeOffsets) {
   });
 
   if (writeOffsets && newDiscussion) {
-    store.commit(
+    getStore().commit(
       'discussion/patchNewDiscussion',
-      discussions[store.state.discussion.newDiscussionId],
+      discussions[getStore().state.discussion.newDiscussionId],
     );
   }
 }
@@ -119,7 +119,7 @@ export default {
     this.clEditor = cledit(editorElt, editorElt.parentNode, true);
     ({ clEditor } = this);
     clEditor.on('contentChanged', (text) => {
-      const oldContent = store.getters['content/current'];
+      const oldContent = getStore().getters['content/current'];
       const newContent = {
         ...utils.deepCopy(oldContent),
         text: utils.sanitizeText(text),
@@ -134,16 +134,16 @@ export default {
         diffUtils.restoreDiscussionOffsets(newContent, markerKeys);
         syncDiscussionMarkers(newContent, false);
       }
-      store.dispatch('content/patchCurrent', newContent);
+      getStore().dispatch('content/patchCurrent', newContent);
       isChangePatch = false;
     });
-    clEditor.on('focus', () => store.commit('discussion/setNewCommentFocus', false));
+    clEditor.on('focus', () => getStore().commit('discussion/setNewCommentFocus', false));
   },
   initClEditorInternal(opts) {
-    const content = store.getters['content/current'];
+    const content = getStore().getters['content/current'];
     if (content) {
       removeDiscussionMarkers(); // Markers will be recreated on contentChanged
-      const contentState = store.getters['contentState/current'];
+      const contentState = getStore().getters['contentState/current'];
       const options = Object.assign({
         selectionStart: contentState.selectionStart,
         selectionEnd: contentState.selectionEnd,
@@ -167,7 +167,7 @@ export default {
   },
   applyContent() {
     if (clEditor) {
-      const content = store.getters['content/current'];
+      const content = getStore().getters['content/current'];
       if (clEditor.setContent(content.text, true).range) {
         // Marker will be recreated on contentChange
         removeDiscussionMarkers();
@@ -190,17 +190,17 @@ export default {
     return start < end && { start, end };
   },
   initHighlighters() {
-    store.watch(
-      () => store.getters['discussion/newDiscussion'],
-      () => syncDiscussionMarkers(store.getters['content/current'], false),
+    getStore().watch(
+      () => getStore().getters['discussion/newDiscussion'],
+      () => syncDiscussionMarkers(getStore().getters['content/current'], false),
     );
 
-    store.watch(
-      () => store.getters['discussion/currentFileDiscussions'],
+    getStore().watch(
+      () => getStore().getters['discussion/currentFileDiscussions'],
       (discussions) => {
         const classGetter = (type, discussionId) => () => {
           const classes = [`discussion-${type}-highlighting--${discussionId}`, `discussion-${type}-highlighting`];
-          if (store.state.discussion.currentDiscussionId === discussionId) {
+          if (getStore().state.discussion.currentDiscussionId === discussionId) {
             classes.push(`discussion-${type}-highlighting--selected`);
           }
           return classes;

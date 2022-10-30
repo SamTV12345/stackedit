@@ -1,7 +1,7 @@
 import DiffMatchPatch from 'diff-match-patch';
 import cledit from './cledit/index.js';
 import animationSvc from '../animationSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 
 const diffMatchPatch = new DiffMatchPatch();
 
@@ -9,7 +9,7 @@ export default {
   /**
    * Get an object describing the position of the scroll bar in the file.
    */
-  getScrollPosition(elt = store.getters['layout/styles'].showEditor
+  getScrollPosition(elt = getStore()().getters['layout/styles'].showEditor
     ? this.editorElt : this.previewElt) {
     const dimensionKey = elt === this.editorElt
       ? 'editorDimension'
@@ -37,7 +37,7 @@ export default {
    * Restore the scroll position from the current file content state.
    */
   restoreScrollPosition() {
-    const { scrollPosition } = store.getters['contentState/current'];
+    const { scrollPosition } = getStore().getters['contentState/current'];
     if (scrollPosition && this.previewCtxMeasured) {
       const sectionDesc = this.previewCtxMeasured.sectionDescList[scrollPosition.sectionIdx];
       if (sectionDesc) {

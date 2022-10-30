@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import googleHelper from './helpers/googleHelper.js';
 import Provider from './common/Provider.js';
 
@@ -6,7 +6,7 @@ export default new Provider({
   id: 'blogger',
   name: 'Blogger',
   getToken({ sub }) {
-    const token = store.getters['data/googleTokensBySub'][sub];
+    const token = getStore().getters['data/googleTokensBySub'][sub];
     return token && token.isBlogger ? token : null;
   },
   getLocationUrl({ blogId, postId }) {

@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import githubHelper from './helpers/githubHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -11,7 +11,7 @@ export default new Provider({
   id: 'github',
   name: 'GitHub',
   getToken({ sub }) {
-    return store.getters['data/githubTokensBySub'][sub];
+    return getStore().getters['data/githubTokensBySub'][sub];
   },
   getLocationUrl({
     owner,
@@ -76,7 +76,7 @@ export default new Provider({
       try {
         content = await this.downloadContent(token, syncLocation);
       } catch (e) {
-        store.dispatch('notification/error', `Could not open file ${syncLocation.path}.`);
+        getStore().dispatch('notification/error', `Could not open file ${syncLocation.path}.`);
         return;
       }
 
@@ -92,18 +92,18 @@ export default new Provider({
       }
       const item = await workspaceSvc.createFile({
         name,
-        parentId: store.getters['file/current'].parentId,
+        parentId: getStore().getters['file/current'].parentId,
         text: content.text,
         properties: content.properties,
         discussions: content.discussions,
         comments: content.comments,
       }, true);
-      store.commit('file/setCurrentId', item.id);
+      getStore().commit('file/setCurrentId', item.id);
       workspaceSvc.addSyncLocation({
         ...syncLocation,
         fileId: item.id,
       });
-      store.dispatch('notification/info', `${store.getters['file/current'].name} was imported from GitHub.`);
+      getStore().dispatch('notification/info', `${getStore().getters['file/current'].name} was imported from GitHub.`);
     }
   },
   makeLocation(token, owner, repo, branch, path) {

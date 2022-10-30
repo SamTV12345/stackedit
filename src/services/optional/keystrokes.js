@@ -1,6 +1,6 @@
 import cledit from '../editor/cledit/index.js';
 import editorSvc from '../editorSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 
 const { Keystroke } = cledit;
 const indentRegexp = /^ {0,3}>[ ]*|^[ \t]*[*+-][ \t](?:\[[ xX]\][ \t])?|^([ \t]*)\d+\.[ \t](?:\[[ xX]\][ \t])?|^\s+/;
@@ -10,7 +10,7 @@ let lastSelection;
 function fixNumberedList(state, indent) {
   if (state.selection
     || indent === undefined
-    || !store.getters['data/computedSettings'].editor.listAutoNumber
+    || !getStore().getters['data/computedSettings'].editor.listAutoNumber
   ) {
     return;
   }

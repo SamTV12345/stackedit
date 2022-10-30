@@ -21,7 +21,7 @@ import simpleModals from '../data/simpleModals.js';
 import editorSvc from '../services/editorSvc.js';
 import syncSvc from '../services/syncSvc.js';
 import googleHelper from '../services/providers/helpers/googleHelper.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 import ModalInner from './modals/common/ModalInner';
 import FilePropertiesModal from './modals/FilePropertiesModal';
@@ -145,14 +145,14 @@ export default {
   methods: {
     async sponsor() {
       try {
-        if (!store.getters['workspace/sponsorToken']) {
+        if (!getStore().getters['workspace/sponsorToken']) {
           // User has to sign in
-          await store.dispatch('modal/open', 'signInForSponsorship');
+          await getStore().dispatch('modal/open', 'signInForSponsorship');
           await googleHelper.signin();
           syncSvc.requestSync();
         }
-        if (!store.getters.isSponsor) {
-          await store.dispatch('modal/open', 'sponsor');
+        if (!getStore().getters.isSponsor) {
+          await getStore().dispatch('modal/open', 'sponsor');
         }
       } catch (e) { /* cancel */ }
     },

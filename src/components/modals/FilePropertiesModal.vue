@@ -92,7 +92,7 @@ import FormEntry from './common/FormEntry.vue';
 import CodeEditor from '../CodeEditor.vue';
 import utils from '../../services/utils.js';
 import presets from '../../data/presets.js';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 const metadataProperties = {
@@ -127,17 +127,17 @@ export default {
     presets: () => Object.keys(presets).sort(),
     tab: {
       get() {
-        return store.getters['data/localSettings'].filePropertiesTab;
+        return getStore().getters['data/localSettings'].filePropertiesTab;
       },
       set(value) {
-        store.dispatch('data/patchLocalSettings', {
+        getStore().dispatch('data/patchLocalSettings', {
           filePropertiesTab: value,
         });
       },
     },
   },
   created() {
-    const content = store.getters['content/current'];
+    const content = getStore().getters['content/current'];
     this.contentId = content.id;
     this.setYamlProperties(content.properties);
     if (this.tab !== 'yaml') {
@@ -227,7 +227,7 @@ export default {
         if (Object.keys(extensions).filter(key => key !== 'preset').length) {
           badgeSvc.addBadge('changeExtension');
         }
-        store.commit('content/patchItem', {
+        getStore().commit('content/patchItem', {
           id: this.contentId,
           properties: utils.sanitizeText(this.yamlProperties),
         });

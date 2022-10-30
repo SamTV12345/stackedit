@@ -107,14 +107,14 @@ import dropboxProvider from '../../services/providers/dropboxProvider.js';
 import githubProvider from '../../services/providers/githubProvider.js';
 import gitlabProvider from '../../services/providers/gitlabProvider.js';
 import syncSvc from '../../services/syncSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 const tokensToArray = (tokens, filter = () => true) => Object.values(tokens)
   .filter(token => filter(token))
   .sort((token1, token2) => token1.name.localeCompare(token2.name));
 
-const openSyncModal = (token, type) => store.dispatch('modal/open', {
+const openSyncModal = (token, type) => getStore().dispatch('modal/open', {
   type,
   token,
 }).then(syncLocation => syncSvc.createSyncLocation(syncLocation));
@@ -140,19 +140,19 @@ export default {
       return Object.keys(this.syncLocations).length;
     },
     currentFileName() {
-      return `"${store.getters['file/current'].name}"`;
+      return `"${getStore().getters['file/current'].name}"`;
     },
     dropboxTokens() {
-      return tokensToArray(store.getters['data/dropboxTokensBySub']);
+      return tokensToArray(getStore().getters['data/dropboxTokensBySub']);
     },
     githubTokens() {
-      return tokensToArray(store.getters['data/githubTokensBySub']);
+      return tokensToArray(getStore().getters['data/githubTokensBySub']);
     },
     gitlabTokens() {
-      return tokensToArray(store.getters['data/gitlabTokensBySub']);
+      return tokensToArray(getStore().getters['data/gitlabTokensBySub']);
     },
     googleDriveTokens() {
-      return tokensToArray(store.getters['data/googleTokensBySub'], token => token.isDrive);
+      return tokensToArray(getStore().getters['data/googleTokensBySub'], token => token.isDrive);
     },
     noToken() {
       return !this.googleDriveTokens.length
@@ -168,36 +168,36 @@ export default {
     },
     async manageSync() {
       try {
-        await store.dispatch('modal/open', 'syncManagement');
+        await getStore().dispatch('modal/open', 'syncManagement');
       } catch (e) { /* cancel */ }
     },
     async addDropboxAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'dropboxAccount' });
-        await dropboxHelper.addAccount(!store.getters['data/localSettings'].dropboxRestrictedAccess);
+        await getStore().dispatch('modal/open', { type: 'dropboxAccount' });
+        await dropboxHelper.addAccount(!getStore().getters['data/localSettings'].dropboxRestrictedAccess);
       } catch (e) { /* cancel */ }
     },
     async addGithubAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'githubAccount' });
-        await githubHelper.addAccount(store.getters['data/localSettings'].githubRepoFullAccess);
+        await getStore().dispatch('modal/open', { type: 'githubAccount' });
+        await githubHelper.addAccount(getStore().getters['data/localSettings'].githubRepoFullAccess);
       } catch (e) { /* cancel */ }
     },
     async addGitlabAccount() {
       try {
-        const { serverUrl, applicationId } = await store.dispatch('modal/open', { type: 'gitlabAccount' });
+        const { serverUrl, applicationId } = await getStore().dispatch('modal/open', { type: 'gitlabAccount' });
         await gitlabHelper.addAccount(serverUrl, applicationId);
       } catch (e) { /* cancel */ }
     },
     async addGoogleDriveAccount() {
       try {
-        await store.dispatch('modal/open', { type: 'googleDriveAccount' });
-        await googleHelper.addDriveAccount(!store.getters['data/localSettings'].googleDriveRestrictedAccess);
+        await getStore().dispatch('modal/open', { type: 'googleDriveAccount' });
+        await googleHelper.addDriveAccount(!getStore().getters['data/localSettings'].googleDriveRestrictedAccess);
       } catch (e) { /* cancel */ }
     },
     async openDropbox(token) {
       const paths = await dropboxHelper.openChooser(token);
-      store.dispatch(
+      getStore().dispatch(
         'queue/enqueue',
         async () => {
           await dropboxProvider.openFiles(token, paths);
@@ -213,7 +213,7 @@ export default {
     },
     async openGoogleDrive(token) {
       const files = await googleHelper.openPicker(token, 'doc');
-      store.dispatch(
+      getStore().dispatch(
         'queue/enqueue',
         async () => {
           await googleDriveProvider.openFiles(token, files);
@@ -229,11 +229,11 @@ export default {
     },
     async openGithub(token) {
       try {
-        const syncLocation = await store.dispatch('modal/open', {
+        const syncLocation = await getStore().dispatch('modal/open', {
           type: 'githubOpen',
           token,
         });
-        store.dispatch(
+        getStore().dispatch(
           'queue/enqueue',
           async () => {
             await githubProvider.openFile(token, syncLocation);
@@ -256,11 +256,11 @@ export default {
     },
     async openGitlab(token) {
       try {
-        const syncLocation = await store.dispatch('modal/open', {
+        const syncLocation = await getStore().dispatch('modal/open', {
           type: 'gitlabOpen',
           token,
         });
-        store.dispatch(
+        getStore().dispatch(
           'queue/enqueue',
           async () => {
             await gitlabProvider.openFile(token, syncLocation);

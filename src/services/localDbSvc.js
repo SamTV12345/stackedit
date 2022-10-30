@@ -1,5 +1,5 @@
 import utils from './utils.js';
-import store from '../store/index.js';
+import  { getStore } from '../store/index.js';
 import welcomeFile from '../data/welcomeFile.md';
 import workspaceSvc from './workspaceSvc.js';
 import constants from '../data/constants.js';
@@ -14,7 +14,7 @@ if (resetApp) {
 }
 
 class Connection {
-  constructor(workspaceId = store.getters['workspace/currentWorkspace'].id) {
+  constructor(workspaceId = getStore().getters['workspace/currentWorkspace'].id) {
     this.getTxCbs = [];
 
     // Make the DB name
@@ -48,7 +48,7 @@ class Connection {
           const dbStore = eventDb.createObjectStore(dbStoreName, {
             keyPath: 'id',
           });
-          dbStore.createIndex('tx', 'tx', {
+          dbgetStore().createIndex('tx', 'tx', {
             unique: false,
           });
         }
@@ -106,7 +106,7 @@ const localDbSvc = {
           const storedItem = JSON.parse(localStorage.getItem(key));
           if (storedItem.hash && lsHashMap[id] !== storedItem.hash) {
             // Item has changed, replace it in the store
-            store.commit('data/setItem', storedItem);
+            getStore().commit('data/setItem', storedItem);
             lsHashMap[id] = storedItem.hash;
           }
         } catch (e) {
@@ -115,7 +115,7 @@ const localDbSvc = {
       }
 
       // Write item if different from stored one
-      const item = store.state.data.lsItemsById[id];
+      const item = getStore().state.data.lsItemsById[id];
       if (item && item.hash !== lsHashMap[id]) {
         localStorage.setItem(key, JSON.stringify(item));
         lsHashMap[id] = item.hash;
@@ -126,7 +126,7 @@ const localDbSvc = {
   /**
    * Return a promise that will be resolved once the synchronization between the store and the
    * localDb will be finished. Effectively, open a transaction, then read and apply all changes
-   * from the DB since the previous transaction, then write all the changes from the store.
+   * from the DB since the previous transaction, then write all the changes from the getStore().
    */
   async sync() {
     return new Promise((resolve, reject) => {
@@ -158,7 +158,7 @@ const localDbSvc = {
   readAll(tx, cb) {
     let { lastTx } = this;
     const dbStore = tx.objectStore(dbStoreName);
-    const index = dbStore.index('tx');
+    const index = dbgetStore().index('tx');
     const range = IDBKeyRange.lowerBound(this.lastTx, true);
     const changes = [];
     index.openCursor(range).onsuccess = (event) => {
@@ -180,12 +180,12 @@ const localDbSvc = {
       }
 
       // Read the collected changes
-      const storeItemMap = { ...store.getters.allItemsById };
+      const storeItemMap = { ...getStore().getters.allItemsById };
       changes.forEach((item) => {
         this.readDbItem(item, storeItemMap);
         // If item is an old delete marker, remove it from the DB
         if (!item.hash && lastTx - item.tx > deleteMarkerMaxAge) {
-          dbStore.delete(item.id);
+          dbgetStore().delete(item.id);
         }
       });
 
@@ -214,7 +214,7 @@ const localDbSvc = {
         checker = cb => (id) => {
           if (!storeItemMap[id]) {
             const [fileId] = id.split('/');
-            if (!store.state.file.itemsById[fileId]) {
+            if (!getStore().state.file.itemsById[fileId]) {
               cb(id);
             }
           }
@@ -222,7 +222,7 @@ const localDbSvc = {
       }
       Object.keys(this.hashMap[type]).forEach(checker((id) => {
         // Put a delete marker to notify other tabs
-        dbStore.put({
+        dbgetStore().put({
           id,
           type,
           tx: incrementedTx,
@@ -240,7 +240,7 @@ const localDbSvc = {
           ...storeItem,
           tx: incrementedTx,
         };
-        dbStore.put(item);
+        dbgetStore().put(item);
         this.hashMap[item.type][item.id] = item.hash;
         this.lastTx = incrementedTx;
       }
@@ -257,7 +257,7 @@ const localDbSvc = {
       delete this.hashMap[dbItem.type][dbItem.id];
       if (storeItem) {
         // Remove item from the store
-        store.commit(`${storeItem.type}/deleteItem`, storeItem.id);
+        getStore().commit(`${storeItem.type}/deleteItem`, storeItem.id);
         delete storeItemMap[storeItem.id];
       }
     } else if (this.hashMap[dbItem.type][dbItem.id] !== dbItem.hash) {
@@ -267,18 +267,18 @@ const localDbSvc = {
       if (storeItem || !contentTypes[dbItem.type]) {
         // Put item in the store
         dbItem.tx = undefined;
-        store.commit(`${dbItem.type}/setItem`, dbItem);
+        getStore().commit(`${dbItem.type}/setItem`, dbItem);
         storeItemMap[dbItem.id] = dbItem;
       }
     }
   },
 
   /**
-   * Retrieve an item from the DB and put it in the store.
+   * Retrieve an item from the DB and put it in the getStore().
    */
   async loadItem(id) {
     // Check if item is in the store
-    const itemInStore = store.getters.allItemsById[id];
+    const itemInStore = getStore().getters.allItemsById[id];
     if (itemInStore) {
       // Use deepCopy to freeze item
       return Promise.resolve(itemInStore);
@@ -288,7 +288,7 @@ const localDbSvc = {
       const onError = () => reject(new Error('Data not available.'));
       this.connection.createTx((tx) => {
         const dbStore = tx.objectStore(dbStoreName);
-        const request = dbStore.get(id);
+        const request = dbgetStore().get(id);
         request.onsuccess = () => {
           const dbItem = request.result;
           if (!dbItem || !dbItem.hash) {
@@ -297,7 +297,7 @@ const localDbSvc = {
             this.hashMap[dbItem.type][dbItem.id] = dbItem.hash;
             // Put item in the store
             dbItem.tx = undefined;
-            store.commit(`${dbItem.type}/setItem`, dbItem);
+            getStore().commit(`${dbItem.type}/setItem`, dbItem);
             resolve(dbItem);
           }
         };
@@ -311,13 +311,13 @@ const localDbSvc = {
   async unloadContents() {
     await this.sync();
     // Keep only last opened files in memory
-    const lastOpenedFileIdSet = new Set(store.getters['data/lastOpenedIds']);
+    const lastOpenedFileIdSet = new Set(getStore().getters['data/lastOpenedIds']);
     Object.keys(contentTypes).forEach((type) => {
-      store.getters[`${type}/items`].forEach((item) => {
+      getStore().getters[`${type}/items`].forEach((item) => {
         const [fileId] = item.id.split('/');
         if (!lastOpenedFileIdSet.has(fileId)) {
           // Remove item from the store
-          store.commit(`${type}/deleteItem`, item.id);
+          getStore().commit(`${type}/deleteItem`, item.id);
         }
       });
     });
@@ -329,7 +329,7 @@ const localDbSvc = {
   async init() {
     // Reset the app if the reset flag was passed
     if (resetApp) {
-      await Promise.all(Object.keys(store.getters['workspace/workspacesById'])
+      await Promise.all(Object.keys(getStore().getters['workspace/workspacesById'])
         .map(workspaceId => workspaceSvc.removeWorkspace(workspaceId)));
       constants.localStorageDataIds.forEach((id) => {
         // Clean data stored in localStorage
@@ -346,16 +346,16 @@ const localDbSvc = {
 
     // Watch workspace deletions and persist them as soon as possible
     // to make the changes available to reloading workspace tabs.
-    store.watch(
-      () => store.getters['data/workspaces'],
+    getStore().watch(
+      () => getStore().getters['data/workspaces'],
       () => this.syncLocalStorage(),
     );
 
     // Save welcome file content hash if not done already
     const hash = utils.hash(welcomeFile);
-    const { welcomeFileHashes } = store.getters['data/localSettings'];
+    const { welcomeFileHashes } = getStore().getters['data/localSettings'];
     if (!welcomeFileHashes[hash]) {
-      store.dispatch('data/patchLocalSettings', {
+      getStore().dispatch('data/patchLocalSettings', {
         welcomeFileHashes: {
           ...welcomeFileHashes,
           [hash]: 1,
@@ -364,11 +364,11 @@ const localDbSvc = {
     }
 
     // If app was last opened 7 days ago and synchronization is off
-    if (!store.getters['workspace/syncToken'] &&
-      (store.state.workspace.lastFocus + constants.cleanTrashAfter < Date.now())
+    if (!getStore().getters['workspace/syncToken'] &&
+      (getStore().state.workspace.lastFocus + constants.cleanTrashAfter < Date.now())
     ) {
       // Clean files
-      store.getters['file/items']
+      getStore().getters['file/items']
         .filter(file => file.parentId === 'trash') // If file is in the trash
         .forEach(file => workspaceSvc.deleteFile(file.id));
     }
@@ -377,17 +377,17 @@ const localDbSvc = {
     utils.setInterval(() => localDbSvc.sync(), 1000);
 
     // watch current file changing
-    store.watch(
-      () => store.getters['file/current'].id,
+    getStore().watch(
+      () => getStore().getters['file/current'].id,
       async () => {
         // See if currentFile is real, ie it has an ID
-        const currentFile = store.getters['file/current'];
+        const currentFile = getStore().getters['file/current'];
         // If current file has no ID, get the most recent file
         if (!currentFile.id) {
-          const recentFile = store.getters['file/lastOpened'];
+          const recentFile = getStore().getters['file/lastOpened'];
           // Set it as the current file
           if (recentFile.id) {
-            store.commit('file/setCurrentId', recentFile.id);
+            getStore().commit('file/setCurrentId', recentFile.id);
           } else {
             // If still no ID, create a new file
             const newFile = await workspaceSvc.createFile({
@@ -395,7 +395,7 @@ const localDbSvc = {
               text: welcomeFile,
             }, true);
             // Set it as the current file
-            store.commit('file/setCurrentId', newFile.id);
+            getStore().commit('file/setCurrentId', newFile.id);
           }
         } else {
           try {
@@ -408,20 +408,20 @@ const localDbSvc = {
               await localDbSvc.loadItem(`${currentFile.id}/content`);
             } catch (err) {
               // Failure (content is not available), go back to previous file
-              const lastOpenedFile = store.getters['file/lastOpened'];
-              store.commit('file/setCurrentId', lastOpenedFile.id);
+              const lastOpenedFile = getStore().getters['file/lastOpened'];
+              getStore().commit('file/setCurrentId', lastOpenedFile.id);
               throw err;
             }
             // Set last opened file
-            store.dispatch('data/setLastOpenedId', currentFile.id);
+            getStore().dispatch('data/setLastOpenedId', currentFile.id);
             // Cancel new discussion and open the gutter if file contains discussions
-            store.commit(
+            getStore().commit(
               'discussion/setCurrentDiscussionId',
-              store.getters['discussion/nextDiscussionId'],
+              getStore().getters['discussion/nextDiscussionId'],
             );
           } catch (err) {
             console.error(err); // eslint-disable-line no-console
-            store.dispatch('notification/error', err);
+            getStore().dispatch('notification/error', err);
           }
         }
       },
@@ -433,7 +433,7 @@ const localDbSvc = {
     const connection = new Connection(workspaceId);
     connection.createTx((tx) => {
       const dbStore = tx.objectStore(dbStoreName);
-      const index = dbStore.index('tx');
+      const index = dbgetStore().index('tx');
       index.openCursor().onsuccess = (event) => {
         const cursor = event.target.result;
         if (cursor) {
@@ -453,7 +453,7 @@ const localDbSvc = {
 
 const loader = type => fileId => localDbSvc.loadItem(`${fileId}/${type}`)
   // Item does not exist, create it
-  .catch(() => store.commit(`${type}/setItem`, {
+  .catch(() => getStore().commit(`${type}/setItem`, {
     id: `${fileId}/${type}`,
   }));
 localDbSvc.loadSyncedContent = loader('syncedContent');

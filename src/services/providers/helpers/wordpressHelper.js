@@ -1,5 +1,5 @@
 import networkSvc from '../../networkSvc.js';
-import store from '../../../store/index.js';
+import {getStore} from '../../../store/index.js';
 import badgeSvc from '../../badgeSvc.js';
 
 const tokenExpirationMargin = 5 * 60 * 1000; // 5 min (WordPress tokens expire after 2 weeks)
@@ -18,7 +18,7 @@ export default {
    * https://developer.wordpress.com/docs/oauth2/
    */
   async startOauth2(sub = null, silent = false) {
-    const clientId = store.getters['data/serverConf'].wordpressClientId;
+    const clientId = getStore().getters['data/serverConf'].wordpressClientId;
 
     // Get an OAuth2 code
     const { accessToken, expiresIn } = await networkSvc.startOauth2(
@@ -48,19 +48,19 @@ export default {
       sub: `${body.ID}`,
     };
     // Add token to wordpress tokens
-    store.dispatch('data/addWordpressToken', token);
+    getStore().dispatch('data/addWordpressToken', token);
     return token;
   },
   async refreshToken(token) {
     const { sub } = token;
-    const lastToken = store.getters['data/wordpressTokensBySub'][sub];
+    const lastToken = getStore().getters['data/wordpressTokensBySub'][sub];
 
     if (lastToken.expiresOn > Date.now() + tokenExpirationMargin) {
       return lastToken;
     }
     // Existing token is going to expire.
     // Try to get a new token in background
-    await store.dispatch('modal/open', {
+    await getStore().dispatch('modal/open', {
       type: 'providerRedirection',
       name: 'WordPress',
     });

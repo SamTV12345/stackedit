@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import wordpressHelper from './helpers/wordpressHelper.js';
 import Provider from './common/Provider.js';
 
@@ -6,7 +6,7 @@ export default new Provider({
   id: 'wordpress',
   name: 'WordPress',
   getToken({ sub }) {
-    return store.getters['data/wordpressTokensBySub'][sub];
+    return getStore().getters['data/wordpressTokensBySub'][sub];
   },
   getLocationUrl({ siteId, postId }) {
     return `https://wordpress.com/post/${siteId}/${postId}`;

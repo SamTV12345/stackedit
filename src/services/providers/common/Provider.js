@@ -1,7 +1,7 @@
 import providerRegistry from './providerRegistry.js';
 import emptyContent from '../../../data/empties/emptyContent.js';
 import utils from '../../utils.js';
-import store from '../../../store/index.js';
+import store, { getStore } from '../../../store/index.js';
 import workspaceSvc from '../../workspaceSvc.js';
 
 const dataExtractor = /<!--stackedit_data:([A-Za-z0-9+/=\s]+)-->\s*$/;
@@ -49,7 +49,7 @@ export default class Provider {
     let result;
     if (!extractedData) {
       // In case stackedit's data has been manually removed, try to restore them
-      result = utils.deepCopy(store.state.content.itemsById[id]) || emptyContent(id);
+      result = utils.deepCopy(getStore().state.content.itemsById[id]) || emptyContent(id);
     } else {
       result = emptyContent(id);
       try {
@@ -81,12 +81,12 @@ export default class Provider {
    * Find and open a file with location that meets the criteria
    */
   static openFileWithLocation(criteria) {
-    const location = utils.search(store.getters['syncLocation/items'], criteria);
+    const location = utils.search(getStore().getters['syncLocation/items'], criteria);
     if (location) {
       // Found one, open it if it exists
-      const item = store.state.file.itemsById[location.fileId];
+      const item = getStore().state.file.itemsById[location.fileId];
       if (item) {
-        store.commit('file/setCurrentId', item.id);
+        getStore().commit('file/setCurrentId', item.id);
         // If file is in the trash, restore it
         if (item.parentId === 'trash') {
           workspaceSvc.setOrPatchItem({

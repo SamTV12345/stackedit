@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 const steps = [
   'welcome',
@@ -106,7 +106,7 @@ export default {
       });
     },
     finish() {
-      store.dispatch('data/patchLayoutSettings', {
+      getStore().dispatch('data/patchLayoutSettings', {
         welcomeTourFinished: true,
       });
     },
@@ -116,7 +116,7 @@ export default {
   },
   mounted() {
     this.$watch(
-      () => store.getters['layout/styles'],
+      () => getStore().getters['layout/styles'],
       () => this.updatePositions(),
       { immediate: true },
     );

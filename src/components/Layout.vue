@@ -63,7 +63,7 @@ import CurrentDiscussion from './gutters/CurrentDiscussion.vue';
 import FindReplace from './FindReplace.vue';
 import editorSvc from '../services/editorSvc.js';
 import markdownConversionSvc from '../services/markdownConversionSvc.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 export default {
   components: {
@@ -97,7 +97,7 @@ export default {
       'layoutSettings',
     ]),
     showFindReplace() {
-      return !!store.state.findReplace.type;
+      return !!getStore().state.findReplace.type;
     },
   },
   methods: {

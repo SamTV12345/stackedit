@@ -19,7 +19,7 @@
 <script>
 import FileSaver from 'file-saver';
 import MenuEntry from './common/MenuEntry';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import backupSvc from '../../services/backupSvc.js';
 import localDbSvc from '../../services/localDbSvc.js';
 
@@ -28,7 +28,7 @@ export default {
     MenuEntry,
   },
   computed: {
-    workspaceId: () => store.getters['workspace/currentWorkspace'].id,
+    workspaceId: () => getStore().getters['workspace/currentWorkspace'].id,
   },
   methods: {
     onImportBackup(evt) {
@@ -38,7 +38,7 @@ export default {
         reader.onload = (e) => {
           const text = e.target.result;
           if (text.match(/\uFFFD/)) {
-            store.dispatch('notification/error', 'File is not readable.');
+            getStore().dispatch('notification/error', 'File is not readable.');
           } else {
             backupSvc.importBackup(text);
           }

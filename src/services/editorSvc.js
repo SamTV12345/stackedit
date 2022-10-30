@@ -11,7 +11,7 @@ import extensionSvc from './extensionSvc.js';
 import editorSvcDiscussions from './editor/editorSvcDiscussions.js';
 import editorSvcUtils from './editor/editorSvcUtils.js';
 import utils from './utils.js';
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import eventBus from '../../build/eventBus.js';
 
 const allowDebounce = (action, wait) => {
@@ -100,7 +100,7 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
         return this.parsingCtx.sections;
       },
       getCursorFocusRatio: () => {
-        if (store.getters['data/layoutSettings'].focusMode) {
+        if (getStore().getters['data/layoutSettings'].focusMode) {
           return 1;
         }
         return 0.15;
@@ -285,8 +285,8 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
    */
   saveContentState: allowDebounce(() => {
     const scrollPosition = editorSvc.getScrollPosition() ||
-      store.getters['contentState/current'].scrollPosition;
-    store.dispatch('contentState/patchCurrent', {
+      store().getters['contentState/current'].scrollPosition;
+    store().dispatch('contentState/patchCurrent', {
       selectionStart: editorSvc.clEditor.selectionMgr.selectionStart,
       selectionEnd: editorSvc.clEditor.selectionMgr.selectionEnd,
       scrollPosition,
@@ -359,12 +359,12 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
     });
     this.clEditor.undoMgr.on('undoStateChange', () => {
       const canUndo = this.clEditor.undoMgr.canUndo();
-      if (canUndo !== store.state.layout.canUndo) {
-        store.commit('layout/setCanUndo', canUndo);
+      if (canUndo !== store().state.layout.canUndo) {
+        store().commit('layout/setCanUndo', canUndo);
       }
       const canRedo = this.clEditor.undoMgr.canRedo();
-      if (canRedo !== store.state.layout.canRedo) {
-        store.commit('layout/setCanRedo', canRedo);
+      if (canRedo !== store().state.layout.canRedo) {
+        store().commit('layout/setCanRedo', canRedo);
       }
     });
     this.pagedownEditor = pagedown({
@@ -372,14 +372,14 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
     });
     this.pagedownEditor.run();
     this.pagedownEditor.hooks.set('insertLinkDialog', (callback) => {
-      store.dispatch('modal/open', {
+      getStore().dispatch('modal/open', {
         type: 'link',
         callback,
       });
       return true;
     });
     this.pagedownEditor.hooks.set('insertImageDialog', (callback) => {
-      store.dispatch('modal/open', {
+      getStore().dispatch('modal/open', {
         type: 'image',
         callback,
       });
@@ -468,7 +468,7 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
     }, 100);
 
     let imgEltsToCache = [];
-    if (store.getters['data/computedSettings'].editor.inlineImages) {
+    if (getStore().getters['data/computedSettings'].editor.inlineImages) {
       this.clEditor.highlighter.on('sectionHighlighted', (section) => {
         section.elt.getElementsByClassName('token img').cl_each((imgTokenElt) => {
           const srcElt = imgTokenElt.querySelector('.token.cl-src');
@@ -540,10 +540,10 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
     // Watch file content changes
     let lastContentId = null;
     let lastProperties;
-    store.watch(
-      () => store.getters['content/currentChangeTrigger'],
+    getStore().watch(
+      () => getStore().getters['content/currentChangeTrigger'],
       () => {
-        const content = store.getters['content/current'];
+        const content = getStore().getters['content/current'];
         // Track ID changes
         let initClEditor = false;
         if (content.id !== lastContentId) {
@@ -554,7 +554,7 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
         // Track properties changes
         if (content.properties !== lastProperties) {
           lastProperties = content.properties;
-          const options = extensionSvc.getOptions(store.getters['content/currentProperties']);
+          const options = extensionSvc.getOptions(getStore().getters['content/currentProperties']);
           if (utils.serializeObject(options) !== utils.serializeObject(this.options)) {
             this.options = options;
             this.initPrism();
@@ -573,15 +573,15 @@ const editorSvc = Object.assign(eventBus, editorSvcDiscussions, editorSvcUtils, 
     );
 
     // Disable editor if hidden or if no content is loaded
-    store.watch(
-      () => store.getters['content/isCurrentEditable'],
+    getStore().watch(
+      () => getStore().getters['content/isCurrentEditable'],
       editable => this.clEditor.toggleEditable(!!editable), {
         immediate: true,
       },
     );
 
-    store.watch(
-      () => utils.serializeObject(store.getters['layout/styles']),
+    getStore().watch(
+      () => utils.serializeObject(getStore().getters['layout/styles']),
       () => this.measureSectionDimensions(false, true, true),
     );
 

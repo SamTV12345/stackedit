@@ -4,7 +4,7 @@
 
 <script>
 import userSvc from '../services/userSvc.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 export default {
   props: ['userId'],
@@ -13,7 +13,7 @@ export default {
       return userSvc.sanitizeUserId(this.userId);
     },
     name() {
-      const userInfo = store.state.userInfo.itemsById[this.sanitizedUserId];
+      const userInfo = getStore().state.userInfo.itemsById[this.sanitizedUserId];
       return userInfo ? userInfo.name : 'Someone';
     },
   },

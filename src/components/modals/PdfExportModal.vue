@@ -26,7 +26,7 @@ import exportSvc from '../../services/exportSvc';
 import networkSvc from '../../services/networkSvc';
 import googleHelper from '../../services/providers/helpers/googleHelper';
 import modalTemplate from './common/modalTemplate';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc';
 
 export default modalTemplate({
@@ -36,11 +36,11 @@ export default modalTemplate({
   methods: {
     async resolve() {
       this.config.resolve();
-      const currentFile = store.getters['file/current'];
-      store.dispatch('queue/enqueue', async () => {
+      const currentFile = getStore().getters['file/current'];
+      getStore().dispatch('queue/enqueue', async () => {
         const [sponsorToken, html] = await Promise.all([
           Promise.resolve().then(() => {
-            const tokenToRefresh = store.getters['workspace/sponsorToken'];
+            const tokenToRefresh = getStore().getters['workspace/sponsorToken'];
             return tokenToRefresh && googleHelper.refreshToken(tokenToRefresh);
           }),
           exportSvc.applyTemplate(
@@ -56,7 +56,7 @@ export default modalTemplate({
             url: 'pdfExport',
             params: {
               idToken: sponsorToken && sponsorToken.idToken,
-              options: JSON.stringify(store.getters['data/computedSettings'].wkhtmltopdf),
+              options: JSON.stringify(getStore().getters['data/computedSettings'].wkhtmltopdf),
             },
             body: html,
             blob: true,
@@ -66,10 +66,10 @@ export default modalTemplate({
           badgeSvc.addBadge('exportPdf');
         } catch (err) {
           if (err.status === 401) {
-            store.dispatch('modal/open', 'sponsorOnly');
+            getStore().dispatch('modal/open', 'sponsorOnly');
           } else {
             console.error(err); // eslint-disable-line no-console
-            store.dispatch('notification/error', err);
+            getStore().dispatch('notification/error', err);
           }
         }
       });

@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import googleHelper from './helpers/googleHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -12,7 +12,7 @@ export default new Provider({
   id: 'googleDriveWorkspace',
   name: 'Google Drive',
   getToken() {
-    return store.getters['workspace/syncToken'];
+    return getStore().getters['workspace/syncToken'];
   },
   getWorkspaceParams({ folderId }) {
     return {
@@ -34,7 +34,7 @@ export default new Provider({
       && utils.makeWorkspaceId(this.getWorkspaceParams({ folderId }));
 
     const getWorkspace = folderId =>
-      store.getters['workspace/workspacesById'][makeWorkspaceId(folderId)];
+      getStore().getters['workspace/workspacesById'][makeWorkspaceId(folderId)];
 
     const initFolder = async (token, folder) => {
       const appProperties = {
@@ -80,9 +80,9 @@ export default new Provider({
         });
       }
 
-      // Update workspace in the store
+      // Update workspace in the getStore()
       const workspaceId = makeWorkspaceId(folder.id);
-      store.dispatch('workspace/patchWorkspacesById', {
+      getStore().dispatch('workspace/patchWorkspacesById', {
         [workspaceId]: {
           id: workspaceId,
           sub: token.sub,
@@ -99,10 +99,10 @@ export default new Provider({
     // Token sub is in the workspace or in the url if workspace is about to be created
     const { sub } = getWorkspace(utils.queryParams.folderId) || utils.queryParams;
     // See if we already have a token
-    let token = store.getters['data/googleTokensBySub'][sub];
+    let token = getStore().getters['data/googleTokensBySub'][sub];
     // If no token has been found, popup an authorize window and get one
     if (!token || !token.isDrive || !token.driveFullAccess) {
-      await store.dispatch('modal/open', 'workspaceGoogleRedirection');
+      await getStore().dispatch('modal/open', 'workspaceGoogleRedirection');
       token = await googleHelper.addDriveAccount(true, utils.queryParams.sub);
     }
 
@@ -147,39 +147,39 @@ export default new Provider({
     switch (token && state.action) {
       case 'create': {
         const driveFolder = googleHelper.driveActionFolder;
-        let syncData = store.getters['data/syncDataById'][driveFolder.id];
+        let syncData = getStore().getters['data/syncDataById'][driveFolder.id];
         if (!syncData && driveFolder.appProperties.id) {
           // Create folder if not already synced
-          store.commit('folder/setItem', {
+          getStore().commit('folder/setItem', {
             id: driveFolder.appProperties.id,
             name: driveFolder.name,
           });
-          const item = store.state.folder.itemsById[driveFolder.appProperties.id];
+          const item = getStore().state.folder.itemsById[driveFolder.appProperties.id];
           syncData = {
             id: driveFolder.id,
             itemId: item.id,
             type: item.type,
             hash: item.hash,
           };
-          store.dispatch('data/patchSyncDataById', {
+          getStore().dispatch('data/patchSyncDataById', {
             [syncData.id]: syncData,
           });
         }
         const file = await workspaceSvc.createFile({
           parentId: syncData && syncData.itemId,
         }, true);
-        store.commit('file/setCurrentId', file.id);
+        getStore().commit('file/setCurrentId', file.id);
         // File will be created on next workspace sync
         break;
       }
       case 'open': {
         // open first file only
         const firstFile = googleHelper.driveActionFiles[0];
-        const syncData = store.getters['data/syncDataById'][firstFile.id];
+        const syncData = getStore().getters['data/syncDataById'][firstFile.id];
         if (!syncData) {
           fileIdToOpen = firstFile.id;
         } else {
-          store.commit('file/setCurrentId', syncData.itemId);
+          getStore().commit('file/setCurrentId', syncData.itemId);
         }
         break;
       }
@@ -187,9 +187,9 @@ export default new Provider({
     }
   },
   async getChanges() {
-    const workspace = store.getters['workspace/currentWorkspace'];
-    const syncToken = store.getters['workspace/syncToken'];
-    const lastStartPageToken = store.getters['data/localSettings'].syncStartPageToken;
+    const workspace = getStore().getters['workspace/currentWorkspace'];
+    const syncToken = getStore().getters['workspace/syncToken'];
+    const lastStartPageToken = getStore().getters['data/localSettings'].syncStartPageToken;
     const { changes, startPageToken } = await googleHelper
       .getChanges(syncToken, lastStartPageToken, false, workspace.teamDriveId);
 
@@ -199,7 +199,7 @@ export default new Provider({
   prepareChanges(changes) {
     // Collect possible parent IDs
     const parentIds = {};
-    Object.entries(store.getters['data/syncDataByItemId']).forEach(([id, syncData]) => {
+    Object.entries(getStore().getters['data/syncDataByItemId']).forEach(([id, syncData]) => {
       parentIds[syncData.id] = id;
     });
     changes.forEach((change) => {
@@ -210,7 +210,7 @@ export default new Provider({
     });
 
     // Collect changes
-    const workspace = store.getters['workspace/currentWorkspace'];
+    const workspace = getStore().getters['workspace/currentWorkspace'];
     const result = [];
     changes.forEach((change) => {
       // Ignore changes on StackEdit own folders
@@ -297,7 +297,7 @@ export default new Provider({
         };
       } else {
         // Item was removed
-        const syncData = store.getters['data/syncDataById'][change.fileId];
+        const syncData = getStore().getters['data/syncDataById'][change.fileId];
         if (syncData && syncData.type === 'file') {
           // create a fake change as a file content change
           contentChange = {
@@ -317,16 +317,16 @@ export default new Provider({
     return result;
   },
   onChangesApplied() {
-    store.dispatch('data/patchLocalSettings', {
+    getStore().dispatch('data/patchLocalSettings', {
       syncStartPageToken,
     });
   },
   async saveWorkspaceItem({ item, syncData, ifNotTooLate }) {
-    const workspace = store.getters['workspace/currentWorkspace'];
-    const syncToken = store.getters['workspace/syncToken'];
+    const workspace = getStore().getters['workspace/currentWorkspace'];
+    const syncToken = getStore().getters['workspace/syncToken'];
     let file;
     if (item.type !== 'file' && item.type !== 'folder') {
-      // For sync/publish locations, store item as filename
+      // For sync/publish locations, getStore() item as filename
       file = await googleHelper.uploadFile({
         token: syncToken,
         name: JSON.stringify(item),
@@ -340,7 +340,7 @@ export default new Provider({
       });
     } else {
       // For type `file` or `folder`
-      const parentSyncData = store.getters['data/syncDataByItemId'][item.parentId];
+      const parentSyncData = getStore().getters['data/syncDataByItemId'][item.parentId];
       let parentId;
       if (item.parentId === 'trash') {
         parentId = workspace.trashFolderId;
@@ -379,7 +379,7 @@ export default new Provider({
   async removeWorkspaceItem({ syncData, ifNotTooLate }) {
     // Ignore content deletion
     if (syncData.type !== 'content') {
-      const syncToken = store.getters['workspace/syncToken'];
+      const syncToken = getStore().getters['workspace/syncToken'];
       await googleHelper.removeFile(syncToken, syncData.id, ifNotTooLate);
     }
   },
@@ -392,7 +392,7 @@ export default new Provider({
       fileIdToOpen = null;
       // Open the file once downloaded content has been stored
       setTimeout(() => {
-        store.commit('file/setCurrentId', fileSyncData.itemId);
+        getStore().commit('file/setCurrentId', fileSyncData.itemId);
       }, 10);
     }
 
@@ -439,8 +439,8 @@ export default new Provider({
       });
     } else {
       // Create file with media
-      const workspace = store.getters['workspace/currentWorkspace'];
-      const parentSyncData = store.getters['data/syncDataByItemId'][file.parentId];
+      const workspace = getStore().getters['workspace/currentWorkspace'];
+      const parentSyncData = getStore().getters['data/syncDataByItemId'][file.parentId];
       gdriveFile = await googleHelper.uploadFile({
         token,
         name: file.name,
@@ -480,7 +480,7 @@ export default new Provider({
     syncData,
     ifNotTooLate,
   }) {
-    const workspace = store.getters['workspace/currentWorkspace'];
+    const workspace = getStore().getters['workspace/currentWorkspace'];
     const file = await googleHelper.uploadFile({
       token,
       name: JSON.stringify({

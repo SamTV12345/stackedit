@@ -36,7 +36,7 @@
 import * as Vue from 'vue';
 import { mapGetters } from 'vuex';
 import ModalInner from './common/ModalInner';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 
 export default {
   components: {
@@ -53,10 +53,10 @@ export default {
       'badgeTree',
     ]),
     badgeCount() {
-      return store.getters['data/allBadges'].filter(badge => badge.isEarned).length;
+      return getStore().getters['data/allBadges'].filter(badge => badge.isEarned).length;
     },
     featureCount() {
-      return store.getters['data/allBadges'].length;
+      return getStore().getters['data/allBadges'].length;
     },
   },
   methods: {

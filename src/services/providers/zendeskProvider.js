@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import zendeskHelper from './helpers/zendeskHelper.js';
 import Provider from './common/Provider.js';
 
@@ -6,7 +6,7 @@ export default new Provider({
   id: 'zendesk',
   name: 'Zendesk',
   getToken({ sub }) {
-    return store.getters['data/zendeskTokensBySub'][sub];
+    return getStore().getters['data/zendeskTokensBySub'][sub];
   },
   getLocationUrl({ sub, locale, articleId }) {
     const token = this.getToken({ sub });

@@ -1,5 +1,5 @@
 import cledit from './editor/cledit/index.js';
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import utils from './utils.js';
 import editorSvc from './editorSvc.js';
 import workspaceSvc from './workspaceSvc.js';
@@ -32,7 +32,7 @@ export default {
     if (!isLight) {
       return;
     }
-    store.commit('setLight', true);
+    getStore().commit('setLight', true);
 
     const file = await workspaceSvc.createFile({
       name: fileName || utils.getHostname(origin),
@@ -43,8 +43,8 @@ export default {
 
     // Sanitize file creations
     const lastCreated = {};
-    const fileItemsById = store.state.file.itemsById;
-    Object.entries(store.getters['data/lastCreated']).forEach(([id, value]) => {
+    const fileItemsById = getStore().state.file.itemsById;
+    Object.entries(getStore().getters['data/lastCreated']).forEach(([id, value]) => {
       if (fileItemsById[id] && fileItemsById[id].parentId === 'temp') {
         lastCreated[id] = value;
       }
@@ -65,16 +65,16 @@ export default {
       });
 
     // Store file creations and open the file
-    store.dispatch('data/setLastCreated', lastCreated);
-    store.commit('file/setCurrentId', file.id);
+    getStore().dispatch('data/setLastCreated', lastCreated);
+    getStore().commit('file/setCurrentId', file.id);
 
     const onChange = cledit.Utils.debounce(() => {
-      const currentFile = store.getters['file/current'];
+      const currentFile = getStore().getters['file/current'];
       if (currentFile.id !== file.id) {
         // Close editor if file has changed for some reason
         this.close();
       } else if (!this.closed && editorSvc.previewCtx.html != null) {
-        const content = store.getters['content/current'];
+        const content = getStore().getters['content/current'];
         const properties = utils.computeProperties(content.properties);
         window.parent.postMessage({
           type: 'fileChange',
@@ -94,6 +94,6 @@ export default {
 
     // Watch preview refresh and file name changes
     editorSvc.$on('previewCtx', onChange);
-    store.watch(() => store.getters['file/current'].name, onChange);
+    getStore().watch(() => getStore().getters['file/current'].name, onChange);
   },
 };

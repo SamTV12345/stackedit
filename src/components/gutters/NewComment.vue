@@ -29,7 +29,7 @@ import editorSvc from '../../services/editorSvc.js';
 import markdownConversionSvc from '../../services/markdownConversionSvc.js';
 import utils from '../../services/utils.js';
 import userSvc from '../../services/userSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default {
@@ -52,13 +52,13 @@ export default {
       'cancelNewComment',
     ]),
     addComment() {
-      const text = store.state.discussion.newCommentText.trim();
+      const text = getStore().state.discussion.newCommentText.trim();
       if (text.length) {
         if (text.length > 2000) {
-          store.dispatch('notification/error', 'Comment is too long.');
+          getStore().dispatch('notification/error', 'Comment is too long.');
         } else {
           // Create comment
-          const discussionId = store.state.discussion.currentDiscussionId;
+          const discussionId = getStore().state.discussion.currentDiscussionId;
           const comment = {
             discussionId,
             sub: this.userId,
@@ -67,23 +67,23 @@ export default {
           };
           const patch = {
             comments: {
-              ...store.getters['content/current'].comments,
+              ...getStore().getters['content/current'].comments,
               [utils.uid()]: comment,
             },
           };
-          if (discussionId === store.state.discussion.newDiscussionId) {
+          if (discussionId === getStore().state.discussion.newDiscussionId) {
             // Create discussion
             patch.discussions = {
-              ...store.getters['content/current'].discussions,
-              [discussionId]: store.getters['discussion/newDiscussion'],
+              ...getStore().getters['content/current'].discussions,
+              [discussionId]: getStore().getters['discussion/newDiscussion'],
             };
             badgeSvc.addBadge('createDiscussion');
           } else {
             badgeSvc.addBadge('addComment');
           }
-          store.dispatch('content/patchCurrent', patch);
-          store.commit('discussion/setNewCommentText');
-          store.commit('discussion/setIsCommenting');
+          getStore().dispatch('content/patchCurrent', patch);
+          getStore().commit('discussion/setNewCommentText');
+          getStore().commit('discussion/setIsCommenting');
         }
       }
     },
@@ -100,28 +100,28 @@ export default {
       ),
       sectionParser: text => markdownConversionSvc
         .parseSections(editorSvc.converter, text).sections,
-      content: store.state.discussion.newCommentText,
-      selectionStart: store.state.discussion.newCommentSelection.start,
-      selectionEnd: store.state.discussion.newCommentSelection.end,
+      content: getStore().state.discussion.newCommentText,
+      selectionStart: getStore().state.discussion.newCommentSelection.start,
+      selectionEnd: getStore().state.discussion.newCommentSelection.end,
       getCursorFocusRatio: () => 0.2,
     });
     clEditor.on('focus', () => this.setNewCommentFocus(true));
 
     // Save typed content and selection
     clEditor.on('contentChanged', value =>
-      store.commit('discussion/setNewCommentText', value));
+      getStore().commit('discussion/setNewCommentText', value));
     clEditor.selectionMgr.on('selectionChanged', (start, end) =>
-      store.commit('discussion/setNewCommentSelection', {
+      getStore().commit('discussion/setNewCommentSelection', {
         start, end,
       }));
 
     const isSticky = this.$el.parentNode.classList.contains('sticky-comment');
-    const isVisible = () => isSticky || store.state.discussion.stickyComment === null;
+    const isVisible = () => isSticky || getStore().state.discussion.stickyComment === null;
 
     this.$watch(
-      () => store.state.discussion.currentDiscussionId,
+      () => getStore().state.discussion.currentDiscussionId,
       () => this.$nextTick(() => {
-        if (isVisible() && store.state.discussion.newCommentFocus) {
+        if (isVisible() && getStore().state.discussion.newCommentFocus) {
           clEditor.focus();
         }
       }),
@@ -148,11 +148,11 @@ export default {
         (visible) => {
           clEditor.toggleEditable(visible);
           if (visible) {
-            const text = store.state.discussion.newCommentText;
+            const text = getStore().state.discussion.newCommentText;
             clEditor.setContent(text);
-            const selection = store.state.discussion.newCommentSelection;
+            const selection = getStore().state.discussion.newCommentSelection;
             clEditor.selectionMgr.setSelectionStartEnd(selection.start, selection.end);
-            if (store.state.discussion.newCommentFocus) {
+            if (getStore().state.discussion.newCommentFocus) {
               clEditor.focus();
             }
           }
@@ -160,7 +160,7 @@ export default {
         { immediate: true },
       );
       this.$watch(
-        () => store.state.discussion.newCommentText,
+        () => getStore().state.discussion.newCommentText,
         newCommentText => clEditor.setContent(newCommentText),
       );
     }

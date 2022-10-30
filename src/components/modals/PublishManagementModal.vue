@@ -49,7 +49,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import ModalInner from './common/ModalInner.vue';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default {
@@ -64,7 +64,7 @@ export default {
       publishLocations: 'current',
     }),
     currentFileName() {
-      return store.getters['file/current'].name;
+      return getStore().getters['file/current'].name;
     },
   },
   methods: {
@@ -72,7 +72,7 @@ export default {
       'info',
     ]),
     remove(location) {
-      store.commit('publishLocation/deleteItem', location.id);
+      getStore().commit('publishLocation/deleteItem', location.id);
       badgeSvc.addBadge('removePublishLocation');
     },
   },

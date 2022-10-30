@@ -1,5 +1,5 @@
 import editorSvc from '../editorSvc.js';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 
 editorSvc.$on('inited', () => {
   const getPreviewOffset = (elt) => {
@@ -18,7 +18,7 @@ editorSvc.$on('inited', () => {
   editorSvc.previewElt.addEventListener('click', (evt) => {
     if (evt.target.classList.contains('task-list-item-checkbox')) {
       evt.preventDefault();
-      if (store.getters['content/isCurrentEditable']) {
+      if (getStore().getters['content/isCurrentEditable']) {
         const editorContent = editorSvc.clEditor.getContent();
         // Use setTimeout to ensure evt.target.checked has the old value
         setTimeout(() => {

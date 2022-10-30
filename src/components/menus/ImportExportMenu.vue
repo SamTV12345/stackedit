@@ -45,17 +45,18 @@
 </template>
 
 <script>
+import { getStore } from '../../store/index.js';
 import { mapGetters } from 'vuex';
 import TurndownService from 'turndown/lib/turndown.browser.umd.js';
 import htmlSanitizer from '../../libs/htmlSanitizer.js';
 import MenuEntry from './common/MenuEntry.vue';
 import Provider from '../../services/providers/common/Provider.js';
-import store from '../../store/index.js';
 import workspaceSvc from '../../services/workspaceSvc.js';
 import exportSvc from '../../services/exportSvc.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
-const turndownService = new TurndownService(store.getters['data/computedSettings'].turndown);
+console.log(getStore())
+const turndownService = new TurndownService(getStore().getters['data/computedSettings'].turndown);
 
 const readFile = file => new Promise((resolve) => {
   if (file) {
@@ -63,7 +64,7 @@ const readFile = file => new Promise((resolve) => {
     reader.onload = (e) => {
       const content = e.target.result;
       if (content.match(/\uFFFD/)) {
-        store.dispatch('notification/error', 'File is not readable.');
+        getStore().dispatch('notification/error', 'File is not readable.');
       } else {
         resolve(content);
       }
@@ -85,7 +86,7 @@ export default {
         ...Provider.parseContent(content),
         name: file.name,
       });
-      store.commit('file/setCurrentId', item.id);
+      getStore().commit('file/setCurrentId', item.id);
       badgeSvc.addBadge('importMarkdown');
     },
     async onImportHtml(evt) {
@@ -97,11 +98,11 @@ export default {
         ...Provider.parseContent(turndownService.turndown(sanitizedContent)),
         name: file.name,
       });
-      store.commit('file/setCurrentId', item.id);
+      getStore().commit('file/setCurrentId', item.id);
       badgeSvc.addBadge('importHtml');
     },
     async exportMarkdown() {
-      const currentFile = store.getters['file/current'];
+      const currentFile = getStore().getters['file/current'];
       try {
         await exportSvc.exportToDisk(currentFile.id, 'md');
         badgeSvc.addBadge('exportMarkdown');
@@ -109,17 +110,17 @@ export default {
     },
     async exportHtml() {
       try {
-        await store.dispatch('modal/open', 'htmlExport');
+        await getStore().dispatch('modal/open', 'htmlExport');
       } catch (e) { /* Cancel */ }
     },
     async exportPdf() {
       try {
-        await store.dispatch('modal/open', 'pdfExport');
+        await getStore().dispatch('modal/open', 'pdfExport');
       } catch (e) { /* Cancel */ }
     },
     async exportPandoc() {
       try {
-        await store.dispatch('modal/open', 'pandocExport');
+        await getStore().dispatch('modal/open', 'pandocExport');
       } catch (e) { /* Cancel */ }
     },
   },

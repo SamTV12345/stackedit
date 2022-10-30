@@ -1,11 +1,11 @@
 import networkSvc from '../../networkSvc.js';
 import utils from '../../utils.js';
-import store from '../../../store/index.js';
+import store, { getStore } from '../../../store/index.js';
 import userSvc from '../../userSvc.js';
 
 const request = async (token, options = {}) => {
   const baseUrl = `${token.dbUrl}/`;
-  const getLastToken = () => store.getters['data/couchdbTokensBySub'][token.sub];
+  const getLastToken = () => getStore().getters['data/couchdbTokensBySub'][token.sub];
 
   const assertUnauthorized = (err) => {
     if (err.status !== 401) {
@@ -27,7 +27,7 @@ const request = async (token, options = {}) => {
       });
     } catch (err) {
       assertUnauthorized(err);
-      await store.dispatch('modal/open', {
+      await getStore().dispatch('modal/open', {
         type: 'couchdbCredentials',
         token: getLastToken(),
       });

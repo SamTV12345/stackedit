@@ -1,5 +1,5 @@
 import localDbSvc from './localDbSvc.js';
-import store from '../store/index.js';
+import { getStore } from '../store/index.js';
 import utils from './utils.js';
 import networkSvc from './networkSvc.js';
 import exportSvc from './exportSvc.js';
@@ -7,11 +7,11 @@ import providerRegistry from './providers/common/providerRegistry.js';
 import workspaceSvc from './workspaceSvc.js';
 import badgeSvc from './badgeSvc.js';
 
-const hasCurrentFilePublishLocations = () => !!store.getters['publishLocation/current'].length;
+const hasCurrentFilePublishLocations = () => !!getStore().getters['publishLocation/current'].length;
 
 const loader = type => fileId => localDbSvc.loadItem(`${fileId}/${type}`)
   // Item does not exist, create it
-  .catch(() => store.commit(`${type}/setItem`, {
+  .catch(() => getStore().commit(`${type}/setItem`, {
     id: `${fileId}/${type}`,
   }));
 const loadContent = loader('content');
@@ -42,10 +42,10 @@ const ensureDate = (value, defaultValue) => {
 
 const publish = async (publishLocation) => {
   const { fileId } = publishLocation;
-  const template = store.getters['data/allTemplatesById'][publishLocation.templateId];
+  const template = getStore().getters['data/allTemplatesById'][publishLocation.templateId];
   const html = await exportSvc.applyTemplate(fileId, template);
   const content = await localDbSvc.loadItem(`${fileId}/content`);
-  const file = store.state.file.itemsById[fileId];
+  const file = getStore().state.file.itemsById[fileId];
   const properties = utils.computeProperties(content.properties);
   const provider = providerRegistry.providersById[publishLocation.providerId];
   const token = provider.getToken(publishLocation);
@@ -66,11 +66,11 @@ const publishFile = async (fileId) => {
   let counter = 0;
   await loadContent(fileId);
   const publishLocations = [
-    ...store.getters['publishLocation/filteredGroupedByFileId'][fileId] || [],
+    ...getStore().getters['publishLocation/filteredGroupedByFileId'][fileId] || [],
   ];
   try {
     await utils.awaitSequence(publishLocations, async (publishLocation) => {
-      await store.dispatch('queue/doWithLocation', {
+      await getStore().dispatch('queue/doWithLocation', {
         location: publishLocation,
         action: async () => {
           const publishLocationToStore = await publish(publishLocation);
@@ -79,22 +79,22 @@ const publishFile = async (fileId) => {
             if (utils.serializeObject(publishLocation) !==
               utils.serializeObject(publishLocationToStore)
             ) {
-              store.commit('publishLocation/patchItem', publishLocationToStore);
+              getStore().commit('publishLocation/patchItem', publishLocationToStore);
               workspaceSvc.ensureUniqueLocations();
             }
             counter += 1;
           } catch (err) {
-            if (store.state.offline) {
+            if (getStore().state.offline) {
               throw err;
             }
             console.error(err); // eslint-disable-line no-console
-            store.dispatch('notification/error', err);
+            getStore().dispatch('notification/error', err);
           }
         },
       });
     });
-    const file = store.state.file.itemsById[fileId];
-    store.dispatch('notification/info', `"${file.name}" was published to ${counter} location(s).`);
+    const file = getStore().state.file.itemsById[fileId];
+    getStore().dispatch('notification/info', `"${file.name}" was published to ${counter} location(s).`);
   } finally {
     await localDbSvc.unloadContents();
   }
@@ -102,11 +102,11 @@ const publishFile = async (fileId) => {
 
 const requestPublish = () => {
   // No publish in light mode
-  if (store.state.light) {
+  if (getStore().state.light) {
     return;
   }
 
-  store.dispatch('queue/enqueuePublishRequest', async () => {
+  getStore().dispatch('queue/enqueuePublishRequest', async () => {
     let intervalId;
     const attempt = async () => {
       // Only start publishing when these conditions are met
@@ -116,7 +116,7 @@ const requestPublish = () => {
           // Cancel publish
           throw new Error('Publish not possible.');
         }
-        await publishFile(store.getters['file/current'].id);
+        await publishFile(getStore().getters['file/current'].id);
         badgeSvc.addBadge('triggerPublish');
       }
     };
@@ -126,14 +126,14 @@ const requestPublish = () => {
 };
 
 const createPublishLocation = (publishLocation, featureId) => {
-  const currentFile = store.getters['file/current'];
+  const currentFile = getStore().getters['file/current'];
   publishLocation.fileId = currentFile.id;
-  store.dispatch(
+  getStore().dispatch(
     'queue/enqueue',
     async () => {
       const publishLocationToStore = await publish(publishLocation);
       workspaceSvc.addPublishLocation(publishLocationToStore);
-      store.dispatch('notification/info', `A new publication location was added to "${currentFile.name}".`);
+      getStore().dispatch('notification/info', `A new publication location was added to "${currentFile.name}".`);
       if (featureId) {
         badgeSvc.addBadge(featureId);
       }

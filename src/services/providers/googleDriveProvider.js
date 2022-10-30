@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import googleHelper from './helpers/googleHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -8,7 +8,7 @@ export default new Provider({
   id: 'googleDrive',
   name: 'Google Drive',
   getToken({ sub }) {
-    const token = store.getters['data/googleTokensBySub'][sub];
+    const token = getStore().getters['data/googleTokensBySub'][sub];
     return token && token.isDrive ? token : null;
   },
   getLocationUrl({ driveFileId }) {
@@ -21,12 +21,12 @@ export default new Provider({
     const state = googleHelper.driveState || {};
     if (state.userId) {
       // Try to find the token corresponding to the user ID
-      let token = store.getters['data/googleTokensBySub'][state.userId];
+      let token = getStore().getters['data/googleTokensBySub'][state.userId];
       // If not found or not enough permission, popup an OAuth2 window
       if (!token || !token.isDrive) {
-        await store.dispatch('modal/open', { type: 'googleDriveAccount' });
+        await getStore().dispatch('modal/open', { type: 'googleDriveAccount' });
         token = await googleHelper.addDriveAccount(
-          !store.getters['data/localSettings'].googleDriveRestrictedAccess,
+          !getStore().getters['data/localSettings'].googleDriveRestrictedAccess,
           state.userId,
         );
       }
@@ -42,7 +42,7 @@ export default new Provider({
             folderId,
           };
           const workspaceId = utils.makeWorkspaceId(workspaceParams);
-          const workspace = store.getters['workspace/workspacesById'][workspaceId];
+          const workspace = getStore().getters['workspace/workspacesById'][workspaceId];
           // If we have the workspace, open it by changing the current URL
           if (workspace) {
             utils.setQueryParams(workspaceParams);
@@ -83,16 +83,16 @@ export default new Provider({
   },
   async performAction() {
     const state = googleHelper.driveState || {};
-    const token = store.getters['data/googleTokensBySub'][state.userId];
+    const token = getStore().getters['data/googleTokensBySub'][state.userId];
     switch (token && state.action) {
       case 'create': {
         const file = await workspaceSvc.createFile({}, true);
-        store.commit('file/setCurrentId', file.id);
+        getStore().commit('file/setCurrentId', file.id);
         // Return a new syncLocation
         return this.makeLocation(token, null, googleHelper.driveActionFolder.id);
       }
       case 'open':
-        store.dispatch(
+        getStore().dispatch(
           'queue/enqueue',
           () => this.openFiles(token, googleHelper.driveActionFiles),
         );
@@ -106,7 +106,7 @@ export default new Provider({
     return Provider.parseContent(content, `${syncLocation.fileId}/content`);
   },
   async uploadContent(token, content, syncLocation, ifNotTooLate) {
-    const file = store.state.file.itemsById[syncLocation.fileId];
+    const file = getStore().state.file.itemsById[syncLocation.fileId];
     const name = utils.sanitizeName(file && file.name);
     const parents = [];
     if (syncLocation.driveParentId) {
@@ -156,25 +156,25 @@ export default new Provider({
         try {
           content = await this.downloadContent(token, syncLocation);
         } catch (e) {
-          store.dispatch('notification/error', `Could not open file ${driveFile.id}.`);
+          getStore().dispatch('notification/error', `Could not open file ${driveFile.id}.`);
           return;
         }
 
         // Create the file
         const item = await workspaceSvc.createFile({
           name: driveFile.name,
-          parentId: store.getters['file/current'].parentId,
+          parentId: getStore().getters['file/current'].parentId,
           text: content.text,
           properties: content.properties,
           discussions: content.discussions,
           comments: content.comments,
         }, true);
-        store.commit('file/setCurrentId', item.id);
+        getStore().commit('file/setCurrentId', item.id);
         workspaceSvc.addSyncLocation({
           ...syncLocation,
           fileId: item.id,
         });
-        store.dispatch('notification/info', `${store.getters['file/current'].name} was imported from Google Drive.`);
+        getStore().dispatch('notification/info', `${getStore().getters['file/current'].name} was imported from Google Drive.`);
       }
     });
   },

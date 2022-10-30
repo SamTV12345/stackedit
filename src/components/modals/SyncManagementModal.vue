@@ -49,7 +49,7 @@
 <script>
 import { mapGetters, mapActions } from 'vuex';
 import ModalInner from './common/ModalInner.vue';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default {
@@ -64,7 +64,7 @@ export default {
       syncLocations: 'currentWithWorkspaceSyncLocation',
     }),
     currentFileName() {
-      return store.getters['file/current'].name;
+      return getStore().getters['file/current'].name;
     },
   },
   methods: {
@@ -75,7 +75,7 @@ export default {
       if (location.id === 'main') {
         this.info('This location can not be removed.');
       } else {
-        store.commit('syncLocation/deleteItem', location.id);
+        getStore().commit('syncLocation/deleteItem', location.id);
         badgeSvc.addBadge('removeSyncLocation');
       }
     },

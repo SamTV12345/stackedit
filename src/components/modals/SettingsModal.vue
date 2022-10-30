@@ -37,7 +37,7 @@ import ModalInner from './common/ModalInner.vue';
 import Tab from './common/Tab.vue';
 import CodeEditor from '../CodeEditor.vue';
 import defaultSettings from '../../data/defaults/defaultSettings.yml';
-import store from '../../store/index.js';
+import store, { getStore } from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 const emptySettings = `# Add your custom settings here to override the
@@ -65,7 +65,7 @@ export default {
     },
   },
   created() {
-    const settings = store.getters['data/settings'];
+    const settings = getStore().getters['data/settings'];
     this.setCustomSettings(settings === '\n' ? emptySettings : settings);
   },
   methods: {
@@ -81,12 +81,12 @@ export default {
     async resolve() {
       if (!this.error) {
         const settings = this.strippedCustomSettings;
-        await store.dispatch('data/setSettings', settings);
+        await getStore().dispatch('data/setSettings', settings);
         const customSettings = yaml.load(settings);
         if (customSettings.shortcuts) {
           badgeSvc.addBadge('changeShortcuts');
         }
-        const computedSettings = store.getters['data/computedSettings'];
+        const computedSettings = getStore().getters['data/computedSettings'];
         const customSettingsCount = Object
           .keys(customSettings)
           .filter(key => key !== 'shortcuts' && computedSettings[key])

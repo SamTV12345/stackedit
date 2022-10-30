@@ -1,4 +1,4 @@
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import dropboxHelper from './helpers/dropboxHelper.js';
 import Provider from './common/Provider.js';
 import utils from '../utils.js';
@@ -21,7 +21,7 @@ export default new Provider({
   id: 'dropbox',
   name: 'Dropbox',
   getToken({ sub }) {
-    return store.getters['data/dropboxTokensBySub'][sub];
+    return getStore().getters['data/dropboxTokensBySub'][sub];
   },
   getLocationUrl({ path }) {
     const pathComponents = path.split('/').map(encodeURIComponent);
@@ -85,7 +85,7 @@ export default new Provider({
         try {
           content = await this.downloadContent(token, syncLocation);
         } catch (e) {
-          store.dispatch('notification/error', `Could not open file ${path}.`);
+          getStore().dispatch('notification/error', `Could not open file ${path}.`);
           return;
         }
 
@@ -101,18 +101,18 @@ export default new Provider({
         }
         const item = await workspaceSvc.createFile({
           name,
-          parentId: store.getters['file/current'].parentId,
+          parentId: getStore().getters['file/current'].parentId,
           text: content.text,
           properties: content.properties,
           discussions: content.discussions,
           comments: content.comments,
         }, true);
-        store.commit('file/setCurrentId', item.id);
+        getStore().commit('file/setCurrentId', item.id);
         workspaceSvc.addSyncLocation({
           ...syncLocation,
           fileId: item.id,
         });
-        store.dispatch('notification/info', `${store.getters['file/current'].name} was imported from Dropbox.`);
+        getStore().dispatch('notification/info', `${getStore().getters['file/current'].name} was imported from Dropbox.`);
       }
     });
   },

@@ -1,7 +1,7 @@
 import * as Vue from 'vue';
 import Clipboard from 'clipboard';
 import timeSvc from '../../services/timeSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import app from '../App.vue';
 
 
@@ -78,5 +78,5 @@ app.directive('clipboard', {
 // Global filters
 app.filter('formatTime', time =>
   // Access the time counter for reactive refresh
-  timeSvc.format(time, store.state.timeCounter));
+  timeSvc.format(time, getStore().state.timeCounter));
 

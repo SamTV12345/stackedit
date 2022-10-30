@@ -1,4 +1,4 @@
-import store from '../store/index.js';
+import  { getStore } from '../store/index.js';
 import utils from './utils.js';
 
 const refreshUserInfoAfter = 60 * 60 * 1000; // 60 minutes
@@ -21,7 +21,7 @@ const sanitizeUserId = (userId) => {
 const parseUserId = userId => [typesBySubPrefix[userId.slice(0, 2)], userId.slice(3)];
 
 const refreshUserInfos = () => {
-  if (store.state.offline) {
+  if (getStore().state.offline) {
     return;
   }
 
@@ -34,7 +34,7 @@ const refreshUserInfos = () => {
         try {
           infoPromisedByUserId[userId] = true;
           const userInfo = await infoResolver(sub);
-          store.commit('userInfo/setItem', userInfo);
+          getStore().commit('userInfo/setItem', userInfo);
         } finally {
           infoPromisedByUserId[userId] = false;
           lastInfosByUserId[userId] = Date.now();
@@ -50,17 +50,17 @@ export default {
     typesBySubPrefix[subPrefix] = type;
   },
   getCurrentUserId() {
-    const loginToken = store.getters['workspace/loginToken'];
+    const loginToken = getStore().getters['workspace/loginToken'];
     if (!loginToken) {
       return null;
     }
-    const loginType = store.getters['workspace/loginType'];
+    const loginType = getStore().getters['workspace/loginType'];
     const prefix = subPrefixesByType[loginType];
     return prefix ? `${prefix}:${loginToken.sub}` : loginToken.sub;
   },
   sanitizeUserId,
   addUserInfo(userInfo) {
-    store.commit('userInfo/setItem', userInfo);
+    getStore().commit('userInfo/setItem', userInfo);
     lastInfosByUserId[userInfo.id] = Date.now();
   },
   addUserId(userId) {
@@ -70,9 +70,9 @@ export default {
       if (lastInfo === undefined) {
         // Try to find a token with this sub to resolve name as soon as possible
         const [type, sub] = parseUserId(sanitizedUserId);
-        const token = store.getters['data/tokensByType'][type][sub];
+        const token = getStore().getters['data/tokensByType'][type][sub];
         if (token) {
-          store.commit('userInfo/setItem', {
+          getStore().commit('userInfo/setItem', {
             id: sanitizedUserId,
             name: token.name,
           });

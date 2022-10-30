@@ -12,7 +12,7 @@
 
 <script>
 import { mapState } from 'vuex';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 
 export default {
   computed: {
@@ -25,7 +25,7 @@ export default {
   methods: {
     close(item = null) {
       this.resolve(item);
-      store.dispatch('contextMenu/close');
+      getStore().dispatch('contextMenu/close');
     },
   },
 };

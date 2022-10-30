@@ -4,7 +4,7 @@ import localDbSvc from './localDbSvc.js';
 import markdownConversionSvc from './markdownConversionSvc.js';
 import extensionSvc from './extensionSvc.js';
 import utils from './utils.js';
-import store from '../store/index.js';
+import {getStore} from '../store/index.js';
 import htmlSanitizer from '../libs/htmlSanitizer.js';
 
 function groupHeadings(headings, level = 1) {
@@ -46,7 +46,7 @@ export default {
     value: '{{{files.0.content.text}}}',
     helpers: '',
   }, pdf = false) {
-    const file = store.state.file.itemsById[fileId];
+    const file = getStore().state.file.itemsById[fileId];
     const content = await localDbSvc.loadItem(`${fileId}/content`);
     const properties = utils.computeProperties(content.properties);
     const options = extensionSvc.getOptions(properties);
@@ -114,7 +114,7 @@ export default {
    * Export a file to disk.
    */
   async exportToDisk(fileId, type, template) {
-    const file = store.state.file.itemsById[fileId];
+    const file = getStore().state.file.itemsById[fileId];
     const html = await this.applyTemplate(fileId, template);
     const blob = new Blob([html], {
       type: 'text/plain;charset=utf-8',

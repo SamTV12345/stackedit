@@ -1,5 +1,5 @@
 import networkSvc from '../../networkSvc.js';
-import store from '../../../store/index.js';
+import {getStore} from '../../../store/index.js';
 import badgeSvc from '../../badgeSvc.js';
 
 const request = (token, options) => networkSvc.request({
@@ -48,7 +48,7 @@ export default {
     };
 
     // Add token to zendesk tokens
-    store.dispatch('data/addZendeskToken', token);
+    getStore().dispatch('data/addZendeskToken', token);
     return token;
   },
   async addAccount(subdomain, clientId) {

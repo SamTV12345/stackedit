@@ -27,7 +27,7 @@ import UserImage from '../UserImage.vue';
 import UserName from '../UserName.vue';
 import editorSvc from '../../services/editorSvc.js';
 import htmlSanitizer from '../../libs/htmlSanitizer.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 import badgeSvc from '../../services/badgeSvc.js';
 
 export default {
@@ -38,8 +38,8 @@ export default {
   props: ['comment'],
   computed: {
     showReply() {
-      return this.comment === store.getters['discussion/currentDiscussionLastComment'] &&
-        !store.state.discussion.isCommenting;
+      return this.comment === getStore().getters['discussion/currentDiscussionLastComment'] &&
+        !getStore().state.discussion.isCommenting;
     },
     text() {
       return htmlSanitizer.sanitizeHtml(editorSvc.converter.render(this.comment.text));
@@ -51,8 +51,8 @@ export default {
     ]),
     async removeComment() {
       try {
-        await store.dispatch('modal/open', 'commentDeletion');
-        store.dispatch('discussion/cleanCurrentFile', { filterComment: this.comment });
+        await getStore().dispatch('modal/open', 'commentDeletion');
+        getStore().dispatch('discussion/cleanCurrentFile', { filterComment: this.comment });
         badgeSvc.addBadge('removeComment');
       } catch (e) {
         // Cancel
@@ -62,7 +62,7 @@ export default {
   mounted() {
     const isSticky = this.$el.parentNode.classList.contains('sticky-comment');
     if (isSticky) {
-      const commentId = store.getters['discussion/currentDiscussionLastCommentId'];
+      const commentId = getStore().getters['discussion/currentDiscussionLastCommentId'];
       const scrollerElt = this.$el.querySelector('.comment__text-inner');
 
       let scrollerMirrorElt;

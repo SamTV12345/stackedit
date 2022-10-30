@@ -7,7 +7,7 @@
 <script>
 import { mapActions } from 'vuex';
 import editorSvc from '../../services/editorSvc.js';
-import store from '../../store/index.js';
+import {getStore} from '../../store/index.js';
 
 export default {
   data: () => ({
@@ -24,7 +24,7 @@ export default {
         let offset;
         // Show the button if content is not a revision and has the focus
         if (
-          !store.state.content.revisionContent &&
+          !getStore().state.content.revisionContent &&
           editorSvc.clEditor.selectionMgr.hasFocus()
         ) {
           this.selection = editorSvc.getTrimmedSelection();
